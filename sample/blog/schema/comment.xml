@@ -1,0 +1,12 @@
+<schema>
+<class name="Comment" table="comments" />
+<attribute name="id" field="comment_id" />
+<attribute name="author" field="comment_author" required="true" />
+<attribute name="title" field="comment_title" required="true" />
+<attribute name="content" field="comment_content" />
+<attribute name="postedTime" field="comment_time" />
+<attribute name="post" field="comment_post" required="true" />
+<hasone name="author" class="User" rel="Comment.author:User.id" ondelete="keep" />
+<hasone name="post" class="Post" rel="Comment.postId:Post.id" ondelete="keep" />
+<key name="id" />
+</schema>

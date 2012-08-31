@@ -1,0 +1,13 @@
+<schema>
+<class name="Post" table="posts" />
+<attribute name="id" field="post_id" />
+<attribute name="author" field="post_author" required="true" />
+<attribute name="title" field="post_title" required="true" />
+<attribute name="chapo" field="post_chapo" />
+<attribute name="content" field="post_content" />
+<attribute name="postedTime" field="post_time" />
+<hasone name="author" class="User" rel="Post.author:User.id" ondelete="keep" />
+<hasmany name="comments" class="Comment" rel="Post.id:Comment.id" ondelete="delete" />
+<hasandbelongsto name="tags" class="Tag" rel="Post.id:Tag.id" table="posts_tags" cols="post_id:tag_id" />
+<key name="id" />
+</schema>

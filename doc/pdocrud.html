@@ -1,0 +1,1166 @@
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style type="text/css">
+
+  
+
+  
+  table {
+    font-size: 1em;
+  }
+
+  
+  div, address, ol, ul, li, option, select { 
+    margin-top: 0px;
+    margin-bottom: 0px;
+  }
+
+  p {
+    margin: 0px;
+  }
+
+  body {
+    padding: 0px;
+    
+    
+      margin: 0px;
+    
+  }
+
+  h6 { font-size: 10pt }
+  h5 { font-size: 11pt }
+  h4 { font-size: 12pt }
+  h3 { font-size: 13pt }
+  h2 { font-size: 14pt }
+  h1 { font-size: 16pt }
+
+  blockquote {padding: 10px; border: 1px #DDDDDD dashed }
+
+  a img {border: 0}
+
+  
+  
+
+  
+  body {
+    font-family: Verdana;
+    
+    font-size: 10.0pt;
+    line-height: normal;
+    background-color: #ffffff;
+  }
+
+
+
+
+</style>
+
+
+</head>
+
+
+<body revision="d3vwdgb_30dbfz75:255">
+
+<h1>
+  PDO-based Object Relational Mapper
+</h1>
+<font color=#ff0000><b>IDEAS :</b></font><br>
+<br>
+- add triggers on relations for the other member of the relation (default: keep)
+:<br>
+&nbsp;&nbsp;&nbsp; - ondelete="(keep|delete)" done<br>
+&nbsp;&nbsp;&nbsp; - onupdate="(keep|update)"<br>
+- use camelizer and pluralizer classes to compute missing table or field names<br>
+- DatabaseToSchema class to convert an existing database table to a
+PDOMapperSchema<br>
+<br>
+<font size=5>DRAFT - WORKING COPY !!!!<br>
+</font><br>
+This document describes a simple ORM implementation based on PHP Data Object.<br>
+<br>
+<span style="FONT-FAMILY:Courier New">@version&nbsp;&nbsp;&nbsp;&nbsp;
+2007-12-10</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">@copyright&nbsp;&nbsp; 2001-2007
+Universite catholique de Louvain
+(UCL)</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">@author&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Frederic Minne
+&lt;zefredz@claroline.net&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">@license &nbsp; &nbsp;
+http://creativecommons.org/licenses/by-nc-sa/2.0/be/<br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>CreativeCommons Attribution-Noncommercial-Share Alike 2.0</span>
+<h2>
+  0. Motivation and introduction<br>
+</h2>
+<h3 style=MARGIN-LEFT:40px>
+  Make the code more simple
+</h3>
+Retreiving data from a database always uses similar SQL queries or PHP code.
+Abstraction layers are good the provide helpers to easily get data from the
+database but they do not reduce the amount of code needed for the queries
+themselves.<br>
+<br>
+Most of this code could be generated automaticaly and let the developpers focus
+on more important issues such as security, application architecture...<br>
+<h3 style=MARGIN-LEFT:40px>
+  Make the code more secure
+</h3>
+Automatic SQL queries generation could lead to more security since the
+verification and filtering of the data passed to and retreived from the database
+can be included in the automatic generation process (PDO is really great at
+this).<br>
+<br>
+Another advantage is that the SQL code is contained into one single class. So
+bugs and security flaws are easier to find and correct.<br>
+<h3 style=MARGIN-LEFT:40px>
+  A simple ORM framework for PHP5
+</h3>
+The ORM architecture described here is aimed to provide the following features :<br>
+<br>
+<ol>
+  <li>
+    a lightweight easy to use and understand object-oriented ORM architecture
+  </li>
+  <li>
+    based on PDO, simplexml and other PHP 5 powerfull features
+  </li>
+  <li>
+    CRUD (Create Read Update Delete) objects based on PHP classes with no need
+    to implement the SQL queries
+  </li>
+  <li>
+    basic relations :
+  </li>
+  <ol>
+    <li>
+      hasone : object has another object mapped from the db mapped to one of his
+      attribute
+    </li>
+    <li>
+      hasmany : object has many objects mapped from the db mapped to one of his
+      attribute
+    </li>
+  </ol>
+</ol>
+<br>
+<h3 style=MARGIN-LEFT:40px>
+  Acronyms and conventions
+</h3>
+<b>PDO </b>: PHP Data Object<br>
+<b>ORM </b>: Object-Relationnal Mapper<br>
+<b>DSN </b>: Data Source Name<br>
+<b>CRUD </b>: Create Read Update Delete<br>
+<br>
+<span style="FONT-FAMILY:Courier New">code source are in courier new </span><br>
+<h3 style=MARGIN-LEFT:40px>
+  Warning
+</h3>
+<font color=#ff0000><b>At this time the basic operations select(One/All),
+create, update, delete, hasOne and hasMany are already working. Planned feature
+: hasAndBelongsToOne/Many based on a n:m relation table.</b></font><br>
+<br>
+Note that the database and the tables used by the PDO-based ORM must exist in
+the DBMS.<br>
+<h2>
+  1. Classes and API
+</h2>
+<h3>
+  1.1. Utility classes : PDOFactory and PDOSQLScript<br>
+</h3>
+The <b>PDOFactory </b>class is not directly related with the PDO-based ORM. It
+is used to have the same DSN syntax for all the PDO drivers.<br>
+<br>
+<span style="FONT-FAMILY:Courier New">$dsn =
+'mysql://user:password@host/database';</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">$dsn =
+'sqlite:/path/to/database';</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">$dsn =
+'sdlite::memory:';</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">$pdo = PDOFactory::getConnection( $dsn
+);</span><br>
+<br>
+The PDOFactory is based uses driver-specific factories implementing a
+PDOAbstractFactory interface :<br>
+<br>
+<span style="FONT-FAMILY:Courier New">/**</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">* Abstract factory to implement for each
+PDO driver</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">*/</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">interface
+PDOAbstractFactory</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">{</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;
+/**</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp; * Get a PDO
+connection for the given array of
+parameters</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp; *
+@param&nbsp;&nbsp; array $dsnArray</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp; * @return&nbsp;
+PDO database connection</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;
+*/</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp; public static function
+getConnection( $dsnArray );</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">}</span><br>
+<br>
+At this time the PDOFactory provides drivers for mysql (tested), sqlite (not
+tested) and pgsql (not tested).<br>
+<br>
+PDOFactory methods summary :<br>
+<br>
+<ul>
+  <li>
+    <i>static </i><b>register</b>( $scheme, $factory ), register a factory for a
+    given driver (scheme)
+  </li>
+  <li>
+    <i>static </i><b>getConnection</b>( $dsn ), get a connection for the given
+    DSN<br>
+  </li>
+</ul>
+<br>
+The <b>PDOSQLScript </b>uses à PDO connection to a database to execute an SQL
+script :<br>
+<br>
+<span style="FONT-FAMILY:Courier New">$sqlScript =
+&lt;&lt;&lt;__SQL__</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">CREATE TABLE `comment`
+(</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp; `comment_id` int(11) NOT NULL
+auto_increment,</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp; `comment_code_id` int(11) NOT NULL
+default '0',</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp; `comment_author` varchar(255) NOT
+NULL default '',</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp; `comment_email` varchar(255)
+default NULL,</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp; `comment_title` varchar(255) NOT
+NULL default '',</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp; `comment_time` datetime default
+'0000-00-00 00:00:00',</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp; `comment_content` text NOT
+NULL,</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp; PRIMARY KEY&nbsp;
+(`comment_id`)</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">);</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">__SQL__;</span><br style="FONT-FAMILY:Courier New">
+<br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">$pdoScript = new PDOScript( $pdo
+);</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">$pdoScript-&gt;execute( $sqlScript
+)</span>;<br>
+<h3>
+  1.2. Mappable objects and PDOMapperSchema
+</h3>
+A mappable object is an object with public attributes corresponding to fields in
+a database table with no constructor or a constructor with no parameters :<br>
+<br>
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp; class
+Comment</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;
+{</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $id;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $codeId;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $author;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $email;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $title;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $postedTime;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $content;</span><br style="FONT-FAMILY:Courier New">
+<br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public function dump()</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+{</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+var_dump( $this );</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+}</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp; }</span><br>
+<br>
+The mapping information is given by a XML schema . The elements of the schema
+are :<br>
+<br>
+<b>attribute </b>: denotes a required xml attribute or element<br>
+<i>attribute </i>: denotes an optional xml attribute or element<br>
+<br>
+<ul>
+  <li>
+    one <b>class </b>element with
+  </li>
+  <ul>
+    <li>
+      <b>name </b>: class name (denoted "<u>current class</u>" in the following)<br>
+    </li>
+    <li>
+      <b>table </b>: database table name<br>
+    </li>
+  </ul>
+  <li>
+    one or more <b>attribute </b>element with
+  </li>
+  <ul>
+    <li>
+      <b>name </b>: name of the attribute of the object of the current class to
+      map
+    </li>
+    <li>
+      <b>field </b>: name of the corresponding field in the database table
+    </li>
+    <li>
+      <i>required </i>: this field is required and then could not be empty in
+      the object
+    </li>
+    <li>
+      <i>default </i>: default value for the object attribute if missing
+    </li>
+  </ul>
+  <li>
+    one <b>key </b>element :
+  </li>
+  <ul>
+    <li>
+      <b>name </b>: name of the attribute used as key (must be declared in an
+      attribute element)<br>
+    </li>
+  </ul>
+  <li>
+    zero or more <i>hasone/hasmany </i>elements with
+  </li>
+  <ul>
+    <li>
+      <b>name </b>: name of the attribute to map to the hasone relation (must be
+      declared in an attribute element)
+    </li>
+    <li>
+      <b>class </b>: name of the class to map (denoted "<u>hasone-related
+      class</u>" in the following)<br>
+    </li>
+    <li>
+      <i>rel </i>: description of the relation mapping in one of the following
+      format :
+    </li>
+    <ul>
+      <li>
+        Class1.attr1:Class2.attr2 : use attribute attr1 from the current class
+        and attribute attr2 from the hasone relatedclass<br>
+      </li>
+    </ul>
+    <ul>
+      <li>
+        Class1.attr or Class1.attr: : use attribute attr from class one and
+        declared key for the hasone-related class
+      </li>
+      <li>
+        :Class2.attr : use the key of the current class and the attr attribute
+        of the hasone-related class
+      </li>
+      <li>
+        empty or missing : use the declared key for both the current class and
+        the hasone-related class
+      </li>
+    </ul>
+    <li>
+      <i>ondelete </i>: trigger if the current object is deleted : value keep
+      (default) or delete<br>
+    </li>
+  </ul>
+</ul>
+<br>
+Sample schema for the Comment class :<br>
+<br>
+$commentXMLSChema = &lt;&lt;&lt;__SCHEMA__<br>
+<span style="FONT-FAMILY:Courier New">&lt;schema&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp; &lt;class
+name="Comment" table="comment" /&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp; &lt;attribute name="id"
+field="comment_id" /&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp; &lt;attribute
+name="codeId" field="comment_code_id" required="true"
+/&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp; &lt;attribute
+name="author" field="comment_author" required="true"
+/&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp; &lt;attribute
+name="email" field="comment_email"
+/&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp; &lt;attribute
+name="title" field="comment_title" required="true"
+/&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp; &lt;attribute
+name="postedTime" field="comment_time" default="{$date}"
+/&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp; &lt;attribute
+name="content" field="comment_content"
+/&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp; &lt;hasone
+name="author" class="User" rel="Comment.id:User.id"
+/&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp; &lt;key name="id"
+/&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&lt;/schema&gt;<br>
+</span>__SCHEMA__;<span style="FONT-FAMILY:Courier New"><br>
+</span><br>
+The XML schema is parsed and represented by an object of the class
+PDOMapperSchema :<br>
+<br>
+<span style="FONT-FAMILY:Courier New">$commentSchemaObj = new PDOMapperSchema(
+$commentXMLSchema );<br>
+$commentSchemaObj = PDOMapperSchema::fromString( $commentXMLSchema );<br>
+<br>
+<span style=FONT-FAMILY:Arial>Alternatively, you can use a file :</span><br>
+<br>
+$commentSchemaObj =
+</span><span style="FONT-FAMILY:Courier New">PDOMapperSchema::fromFile(
+'path/to/comment.xml' );<br>
+<br>
+<span style=FONT-FAMILY:Arial>The <b>PDOMapperSchema </b>class provides methods
+to get informations about the schema :</span><br style=FONT-FAMILY:Arial>
+<br>
+</span>
+<ul>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>getClass</b>():string, return the
+    name of the class of the mapped object</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>getTable</b>():string, return the
+    name of the table for the mapped object</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>getKey</b>():string, return the
+    name of the table key for the mapped object</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>getField</b>( $attribute ):string,
+    return the name of the field mapped by the given attribute</span>
+  </li>
+</ul>
+<span style="FONT-FAMILY:Courier New"><br style=FONT-FAMILY:Arial>
+<span style=FONT-FAMILY:Arial>Some informative methods used in PDOMapper
+internals are also provided as public methods :</span><br>
+<br style=FONT-FAMILY:Arial>
+</span>
+<ul>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>getFieldList</b>():array, return
+    the list of all fields</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>getAttributeList</b>():array,
+    return the list of all attributes</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>isRequired</b>( $attribute
+    ):boolean, check if the attribute is required or not</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>hasDefaultValue</b>( $attribute
+    ):boolean, check if the given attribute has a default value</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>getDefaultValue</b>( $attribute
+    ):string, return the default value af the given attribute</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>hasOne</b>( $attribute ):boolean,
+    check if the attribute is part of a has one relation</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>getHasOneRelation</b>( $attribute
+    ):boolean, get the has one relation for the given attribute</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>countHasManyRelations</b>():int,
+    count the has one relations</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>getHasManyRelationList</b>():array,
+    get the has one relations</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>hasMany</b>( $attribute ):boolean,
+    check if the attribute is part of a has many relation</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"> <b>getHasManyRelation</b>( $attribute
+    ):boolean, get the has many relation for the given attribute</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>countHasManyRelation</b>():int,
+    count the has many relations</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>getHasManyRelationList</b>():array,
+    get the has many relations</span>
+  </li>
+</ul>
+<h3>
+  1.3. PDOMapper
+</h3>
+The <b>PDOMapper </b>is the main class of the PDO-ORM and implements the CRUD
+methods for the mapped objects represented by <b>PDOMapperSchema </b>:<br>
+<br>
+$commentSchemaObj = new PDOMapperSchema( $commentXMLSchema );<br>
+$commentMapper = new PDOMapper( $commentSchemaObj );<br>
+<br>
+The <b>PDOMapper </b>declares the following CRUD methods :<br>
+<br style="FONT-FAMILY:Courier New">
+<ul>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>select</b>( $clause = '1', $params
+    = null ):PDOStatement, </span><span style="FONT-FAMILY:Courier New">select
+    one or more objects from the database matching the optional
+    </span><span style="FONT-FAMILY:Courier New">clause and the given prepared
+    query parameters (see PHP manual entry for PDOStatement for more
+    information). If no clause given, returns all the objects from DB</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>update</b>( $obj ):object,
+    </span><span style="FONT-FAMILY:Courier New">update the given object in the
+    database</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>create</b>( $obj ):object, create
+    the given object in the database</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>delete</b>( $obj ):boolean,
+    d</span><span style="FONT-FAMILY:Courier New">elete the given object from
+    the database</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>selectOne</b>( $clause = "1",
+    $params = null ):object or false,
+    </span><span style="FONT-FAMILY:Courier New">select one object of the
+    current schema matching the given clause</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>selectAll</b>( $clause = "1",
+    $params = null ):array of objects,
+    </span><span style="FONT-FAMILY:Courier New">select all the objects of the
+    current schema matching the given clause</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>hasOne</b>( $obj, $name ):object or
+    false, </span><span style="FONT-FAMILY:Courier New">return the object of the
+    has one relation</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>hasMany</b>( $obj, $name ): array
+    of object, </span><span style="FONT-FAMILY:Courier New">returns the objects
+    of the has many relation</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>deleteWhere</b>( $clause = '1',
+    $params = null ):boolean, delete objects giving a clause (warning :
+    deleteWhere do not use triggers !)<br>
+    </span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>deleteAll</b>():boolean, delete all
+    objects </span><span style="FONT-FAMILY:Courier New">(warning : deleteAll do
+    not use triggers !)</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>deleteHasOne</b>( $obj, $name
+    ):boolean, delete an object related to the current object through a has one
+    relation</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>deleteHasMany</b>( $obj, $name
+    ):boolean, delete an object related to the current object through a has many
+    relation</span>
+  </li>
+  <li>
+    <span style="FONT-FAMILY:Courier New"><b>getSchema</b>():PDOMapperSchema,
+    return the current schema<br>
+    </span>
+  </li>
+</ul>
+<h3>
+  1.4. PDOMapperBuilder
+</h3>
+The <b>PDOMapperBuilder </b>is the registry and factory for the PDOMapper
+objects and made instanciation of mapped objects easier :<br>
+<br>
+First you have to instanciate the builder with the given PDO connection :<br>
+<br>
+<span style="FONT-FAMILY:Courier New">$dsn =
+'mysql://root@localhost/pastecode';</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">$mapperBuilder = new PDOMapperBuilder(
+PDOFactory::getConnection( $dsn ) );</span><br>
+<br>
+Then you have to register the PDOMapperSchema for the mapped objects :<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+<span style="FONT-FAMILY:Courier New">$mapperBuilder-&gt;register( new
+PDOMapperSchema( $commentXMLSchema ) );</span><br>
+<br>
+and you can get the object mapper for a registered schema by using the getMapper
+method :<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+<span style="FONT-FAMILY:Courier New">$commentMapper =
+$mapperBuilder-&gt;getMapper( 'Comment' );<br>
+<br style=FONT-FAMILY:Arial>
+<span style=FONT-FAMILY:Arial>You can get the retated schema through the
+getSchema method :<br>
+<br>
+</span></span><span style="FONT-FAMILY:Courier New">$commentMapperSchema =
+$mapperBuilder-&gt;getSchema( 'Comment' );</span><br>
+<h2 style=FONT-FAMILY:Arial>
+  2. Using the framework
+</h2>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial>Here is some
+usage sample for the framework. In this sample, we will consider a simple blog
+system with users (represented by a User class) and posts (represented by the
+Post class). A user can write many posts and a post belongs to one
+user.</span></span><br>
+<h3>
+  2.1. Simple usage
+</h3>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial>Let's define
+the user class, database table and XML schema for the user :<br>
+<br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">class
+User</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">{</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $id;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $uid;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $password;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $firstName;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $lastName;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $email;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $registration;</span><br style="FONT-FAMILY:Courier New">
+<br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public function dump()</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+{</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+var_dump( $this );</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+}</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">}<br>
+<br>
+CREATE TABLE `users` (<br>
+&nbsp; `user_id` int(11) NOT NULL auto_increment,<br>
+&nbsp; `user_uid` varchar(255) NOT NULL default '',<br>
+&nbsp; `user_password` varchar(255) NOT NULL default '',<br>
+&nbsp; `user_firstname` varchar(255) NOT NULL default '',<br>
+&nbsp; `user_lastname` varchar(255) NOT NULL default '',<br>
+&nbsp; `user_email` varchar(255) default NULL,<br>
+&nbsp; `user_registration` datetime default '0000-00-00 00:00:00',<br>
+&nbsp; PRIMARY KEY&nbsp; (`user_id`)<br>
+);<br>
+</span><br>
+<span style="FONT-FAMILY:Courier New">&lt;schema&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&lt;class name="User" table="users"
+/&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&lt;attribute name="id" field="user_id"
+/&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&lt;attribute name="uid" field="user_uid"
+required="true" /&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&lt;attribute name="password"
+field="user_password" required="true"
+/&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&lt;attribute name="firstName"
+field="user_firstname" required="true"
+/&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&lt;attribute name="lastName"
+field="user_lastname" required="true"
+/&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&lt;attribute name="email"
+field="user_email" /&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&lt;attribute name="registration"
+field="user_registration" /&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&lt;key name="id"
+/&gt;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&lt;/schema&gt;</span></span></span><br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><br style=FONT-FAMILY:Arial>
+<span style=FONT-FAMILY:Arial>One can then register and get the mapper by
+calling the following methods :<br>
+<br>
+<span style="FONT-FAMILY:Courier New">$mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">$userMapper =
+$mapperBuilder-&gt;getMapper( 'User' );</span><br>
+<br>
+Then one can get the list of all users by calling PDOMapper::selectAll :<br>
+<br>
+<span style="FONT-FAMILY:Courier New">$users =
+$userMapper-&gt;selectAll();</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">foreach ( $users as $user
+)</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">{</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;
+$user-&gt;dump();</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">}</span><br>
+<br>
+Select one user :<br>
+<br>
+<span style="FONT-FAMILY:Courier New">$user = $userMapper-&gt;selectOne(
+$userMapper-&gt;getSchema()-&gt;getField( 'id' ) . ' = :id',&nbsp; array( ':id'
+=&gt; 4 ) );</span><br>
+</span></span></span><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><br>
+Update a user :<br>
+<br>
+<span style="FONT-FAMILY:Courier New">$user-&gt;uid =
+'Zelda';</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">$userMapper-&gt;update( $user
+);</span><br>
+<br>
+Delete a user :<br>
+<br>
+<span style="FONT-FAMILY:Courier New">$userMapper-&gt;delete( $user );<br>
+<br>
+<span style=FONT-FAMILY:Arial>Delete all users :</span><br>
+<br>
+$userMapper-&gt;deleteAll();<br>
+</span><br>
+</span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial>Create
+a new user :<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+<span style="FONT-FAMILY:Courier New">$user = new
+User;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">$user-&gt;uid =
+'mithrandir';</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">$user-&gt;password =
+'L0rien';</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">$user-&gt;firstName =
+'Gandalf';</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">$user-&gt;lastName = 'Le
+Gris';</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">$user-&gt;email =
+'gandalf@root.org';</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">$user-&gt;registration =
+</span></span></span></span>date( "Y-m-d H:i:s"
+);<span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><br>
+&nbsp;&nbsp;&nbsp;&nbsp; </span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">$user6 = $userMapper-&gt;create( $user
+);</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><br>
+</span></span></span></span>
+<h3>
+  2.2. Working with relations
+</h3>
+<h2>
+</h2>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial>To
+illustrate relations, let's add the Post class to our blog.<br>
+<br>
+Let's define the following class, database and schema for the Post object :<br>
+<br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">class
+Post</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">{</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $id;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $chapo;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $author;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $title;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $postedTime;</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public $content;</span><br style="FONT-FAMILY:Courier New">
+<br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+public function dump()</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+{</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+var_dump( $this );</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+}</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New">}<br>
+<br>
+CREATE TABLE IF NOT EXISTS `posts` (<br>
+&nbsp; `post_id` int(11) NOT NULL auto_increment,<br>
+&nbsp; `post_author` int(11) NOT NULL default 0,<br>
+&nbsp; `post_chapo` varchar(255) NOT NULL default '',<br>
+&nbsp; `post_title` varchar(255) NOT NULL default '',<br>
+&nbsp; `post_content` text NOT NULL,<br>
+&nbsp; `post_time` datetime default '0000-00-00 00:00:00',<br>
+&nbsp; PRIMARY KEY&nbsp; (`post_id`)<br>
+);<br>
+<br>
+</span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">
+&lt;schema&gt;<br>
+&lt;class name="Post" table="posts" /&gt;<br>
+&lt;attribute name="id" field="post_id" /&gt;<br>
+&lt;attribute name="author" field="post_author" required="true" /&gt;<br>
+&lt;attribute name="title" field="post_title" required="true" /&gt;<br>
+&lt;attribute name="chapo" field="post_chapo" /&gt;<br>
+&lt;attribute name="content" field="post_content" /&gt;<br>
+&lt;attribute name="postedTime" field="post_time" /&gt;<br>
+&lt;key name="id" /&gt;<br>
+&lt;/schema&gt;</span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><br>
+</span></span></span></span></span>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><br>
+</span></span></span></span>
+<p>
+  <span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><b><i><u>2.2.1.
+  Has One relation : Getting the author of a post
+  :</u></i></b></span></span></span></span>
+</p>
+<br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial>So
+we can get the author of a Post by calling the following :<br>
+<br>
+</span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">
+$mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New"> $mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));<br>
+</span></span></span></span>$userMapper = $mapperBuilder-&gt;getMapper( 'User'
+);<br>
+$postMapper =
+</span><span style="FONT-FAMILY:Courier New">$mapperBuilder-&gt;getMapper(
+'Post' );<br>
+<br>
+// 1. load a given post by it's id :<br>
+</span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">
+$post = $postsMapper-&gt;selectOne(
+</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">$postMapper-&gt;getSchema()-&gt;getField(
+'author' ).' =
+:id'</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">,&nbsp;
+array( ':id' =&gt; 1 )
+);</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><br>
+</span>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">//
+2. load the user with id corresponding to the Post author :<br>
+</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">$user4
+= $userMapper-&gt;selectOne( $userMapper-&gt;getSchema()-&gt;getField( 'id' ).'
+= :uid',&nbsp; array( ':uid' =&gt;
+</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">$post-&gt;author</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">
+)
+);</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><br>
+<br>
+</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial>This
+method is great and simple but it has a flaw : we have to know about the way a
+user is connected to his posts in the database to write the code ! We can get
+rid of this limitation by defining a relation between User and Post :
+</span></span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial>one
+Post is owned by one User. In our schema, this will be represented by <b>ahasone
+</b>element in the Post schema :</span></span><br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><br>
+&lt;schema&gt;<br>
+&lt;class name="Post" table="posts" /&gt;<br>
+&lt;attribute name="id" field="post_id" /&gt;<br>
+&lt;attribute name="author" field="post_author" required="true" /&gt;<br>
+&lt;attribute name="title" field="post_title" required="true" /&gt;<br>
+&lt;attribute name="chapo" field="post_chapo" /&gt;<br>
+&lt;attribute name="content" field="post_content" /&gt;<br>
+&lt;attribute name="postedTime" field="post_time" /&gt;<br>
+<b>&lt;hasone name="author" class="User" rel="Post.author:User.id" /&gt;</b><br>
+&lt;key name="id" /&gt;<br>
+&lt;/schema&gt;<br>
+<span style=FONT-FAMILY:Arial><br>
+The added hasone element means that "<i>one post is owned by one user and that
+this user is found by searching the user in the database having the post author
+has its id</i>".<br>
+<br>
+Using that</span><span style=FONT-FAMILY:Arial>, we can get the author of a post
+without the need to know the way the relation is represented in the database
+since this is encapsulated within the schema itself&nbsp; :<br>
+<br>
+</span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">
+$mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New"> $mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));<br>
+</span></span></span></span>$userMapper = $mapperBuilder-&gt;getMapper( 'User'
+);<br>
+$postMapper =
+</span><span style="FONT-FAMILY:Courier New">$mapperBuilder-&gt;getMapper(
+'Post' );<br>
+<br>
+// 1. load a given post by it's id :<br>
+</span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">
+$post = $postMapper-&gt;selectOne(
+</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">$postMapper-&gt;getSchema()-&gt;getField(
+'author' ).' =
+:id'</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">,&nbsp;
+array( ':id' =&gt; 1 )
+);</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><br>
+</span>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">//
+2. load the user with id corresponding to the Post author :<br>
+</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">$user4
+= $postMapper-&gt;hasOne( $post,
+'author'</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">
+) );<br>
+<br>
+</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><b><i><u>2.2.2.
+Has Many relation : Getting the posts of a user
+:</u></i></b></span></span></span></span><br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><br>
+<span style=FONT-FAMILY:Arial>We can also get the posts of a given user by
+calling :</span><br>
+<br>
+</span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">
+$mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New"> $mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));<br>
+</span></span></span></span>$userMapper = $mapperBuilder-&gt;getMapper( 'User'
+);<br>
+$postMapper =
+</span><span style="FONT-FAMILY:Courier New">$mapperBuilder-&gt;getMapper(
+'Post' );<br>
+<br>
+</span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">//
+1. load the user with the given user name :<br>
+</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">$user
+= $userMapper-&gt;selectOne( $userMapper-&gt;getSchema()-&gt;getField( 'uid' ).'
+= :uid',&nbsp; array( ':uid' =&gt; 'Zelda' ) );<br>
+// 2. load the posts of the user :<br>
+</span></span></span></span></span>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">
+$posts = $postsMapper-&gt;selectAll(
+</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">$postMapper-&gt;getSchema()-&gt;getField(
+'author' ).' =
+:id'</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">,&nbsp;
+array( ':id' =&gt; $user-&gt;id ) );<br>
+<br>
+<span style=FONT-FAMILY:Arial>Once again, it is great but we still need to know
+the relation between User and Post in the database to run the code. One more
+time, we are going to use relations to simplify the code.
+Le</span></span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial>t's
+add a has many relation between User and Post since one User can write several
+Posts :</span><br>
+<br>
+&lt;schema&gt;<br>
+&lt;class name="User" table="users" /&gt;<br>
+&lt;attribute name="id" field="user_id" /&gt;<br>
+&lt;attribute name="uid" field="user_uid" required="true" /&gt;<br>
+&lt;attribute name="password" field="user_password" required="true" /&gt;<br>
+&lt;attribute name="firstName" field="user_firstname" required="true" /&gt;<br>
+&lt;attribute name="lastName" field="user_lastname" required="true" /&gt;<br>
+&lt;attribute name="email" field="user_email" /&gt;<br>
+&lt;attribute name="registration" field="user_registration" /&gt;<br>
+<b>&lt;hasmany name="posts" class="Post" rel="User.id:Post.author" /&gt;</b><br>
+&lt;key name="id" /&gt;<br>
+&lt;/schema&gt;<br>
+<br>
+</span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial>The
+added <b>hasmany </b>element means that "<i>one user owns many posts and that
+the posts of the user can be found by searching the posts in the database having
+the user id has their author</i>".</span></span></span></span><br>
+<br>
+We can get the posts of a given user by calling the following :<br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><br>
+</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">
+$mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New"> $mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));<br>
+</span></span></span></span>$userMapper = $mapperBuilder-&gt;getMapper( 'User'
+);<br>
+$postMapper =
+</span><span style="FONT-FAMILY:Courier New">$mapperBuilder-&gt;getMapper(
+'Post' );<br>
+<br>
+</span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">//
+1. load the user with the given user name
+:</span></span></span></span></span><br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">$user
+= $userMapper-&gt;selectOne( $userMapper-&gt;getSchema()-&gt;getField( 'uid' ).'
+= :uid',&nbsp; array( ':uid' =&gt; 'Zelda' )
+);</span></span></span></span></span><br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">//
+2. load the posts of the user :</span></span></span></span></span><br>
+<span style="FONT-FAMILY:Courier New">$posts = $userMapper-&gt;hasMany( $user,
+'posts' );<br>
+<br>
+<span style=FONT-FAMILY:Arial>Now we do not need to know about the internals of
+the relation between User and Post anymore !<br>
+<br>
+<b><i><u>2.2.3. Deleting with relations</u></i></b><br>
+<br>
+Let's see how relations can simplify the deletion of objects related through a
+has one or has many relation.<br>
+<br>
+In our blog application, if one delete a user, all the posts of this user must
+be deleted. Without relation, we have to write the following.<br>
+<br>
+</span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">
+$mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New"> $mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));<br>
+</span></span></span></span>$userMapper = $mapperBuilder-&gt;getMapper( 'User'
+);<br>
+$postMapper =
+</span><span style="FONT-FAMILY:Courier New">$mapperBuilder-&gt;getMapper(
+'Post' );<br>
+<br>
+</span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">//
+1. load the user with the given user name
+:</span></span></span></span></span><br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">$user
+= $userMapper-&gt;selectOne( $userMapper-&gt;getSchema()-&gt;getField( 'uid' ).'
+= :uid',&nbsp; array( ':uid' =&gt; 'Zelda' ) );<br>
+// 2. delete the posts of the given user :<br>
+$postsMapper-&gt;deleteWhere(</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">$postMapper-&gt;getSchema()-&gt;getField(
+'author' ).' =
+:id'</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">,&nbsp;
+array( ':id' =&gt; $user-&gt;id
+)</span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">);<br>
+// 3. delete the user :<br>
+$userMapper-&gt;delete( $user );<br>
+<br>
+<font face=Arial>With relation we can also write something like this :<br>
+<br>
+</font></span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">
+$mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New"> $mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));<br>
+</span></span></span></span>$userMapper = $mapperBuilder-&gt;getMapper( 'User'
+);<br>
+$postMapper =
+</span><span style="FONT-FAMILY:Courier New">$mapperBuilder-&gt;getMapper(
+'Post' );<br>
+<br>
+</span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">//
+1. load the user with the given user name
+:</span></span></span></span></span><br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">$user
+= $userMapper-&gt;selectOne( $userMapper-&gt;getSchema()-&gt;getField( 'uid' ).'
+= :uid',&nbsp; array( ':uid' =&gt; 'Zelda' )
+);</span></span></span></span></span><br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">//
+2. load the posts of the user :</span></span></span></span></span><br>
+<span style="FONT-FAMILY:Courier New">$posts = $userMapper-&gt;hasMany( $user,
+'posts' );<br>
+<br>
+foreach ( $posts as $post )<br>
+{<br>
+&nbsp;&nbsp;&nbsp; $postMapper-&gt;delete( $post );<br>
+}<br>
+</span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><font face=Arial><br>
+But this is not great since we have to perform one SQL query for each deletion.
+How can we optimize this ? By using deleteHasOne or deleteHasMany :<br>
+<br>
+</font></span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">
+$mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New"> $mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));<br>
+</span></span></span></span>$userMapper = $mapperBuilder-&gt;getMapper( 'User'
+);<br>
+$postMapper =
+</span><span style="FONT-FAMILY:Courier New">$mapperBuilder-&gt;getMapper(
+'Post' );<br>
+<br>
+</span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">//
+1. load the user with the given user name
+:</span></span></span></span></span><br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">$user
+= $userMapper-&gt;selectOne( $userMapper-&gt;getSchema()-&gt;getField( 'uid' ).'
+= :uid',&nbsp; array( ':uid' =&gt; 'Zelda' ) );<br>
+// 2. delete the user posts :<br>
+$userMapper-&gt;deleteHasMany( $user, 'posts' );<br>
+</span></span></span></span></span>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">//
+3. delete the user :</span></span></span></span></span><br>
+<span style="FONT-FAMILY:Courier New">$userMapper-&gt;delete( $user
+);</span><br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><font face=Arial><br>
+But we still have to delete the posts "by hand". In fact we can do something
+better by using relation triggers :<br>
+<br>
+</font></span></span></span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">
+&lt;schema&gt;<br>
+&lt;class name="User" table="users" /&gt;<br>
+&lt;attribute name="id" field="user_id" /&gt;<br>
+&lt;attribute name="uid" field="user_uid" required="true" /&gt;<br>
+&lt;attribute name="password" field="user_password" required="true" /&gt;<br>
+&lt;attribute name="firstName" field="user_firstname" required="true" /&gt;<br>
+&lt;attribute name="lastName" field="user_lastname" required="true" /&gt;<br>
+&lt;attribute name="email" field="user_email" /&gt;<br>
+&lt;attribute name="registration" field="user_registration" /&gt;<br>
+<b>&lt;hasmany name="posts" class="Post" rel="User.id:Post.author"
+ondelete="delete" /&gt;</b><br>
+&lt;key name="id" /&gt;<br>
+&lt;/schema&gt;</span></span></span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><br>
+<span style=FONT-FAMILY:Arial><br>
+</span></span></span></span>The ondelete="delete" attribute tells pdocrud to
+delete all the posts of the user when the user is delete. This will be executed
+automatically by the delete method of $userMapper :<br>
+<br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">
+$mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));</span><br style="FONT-FAMILY:Courier New">
+<span style="FONT-FAMILY:Courier New"> $mapperBuilder-&gt;register(
+PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));<br>
+</span></span></span></span>$userMapper = $mapperBuilder-&gt;getMapper( 'User'
+);<br>
+$postMapper =
+</span><span style="FONT-FAMILY:Courier New">$mapperBuilder-&gt;getMapper(
+'Post' );<br>
+<br>
+</span><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">//
+1. load the user with the given user name
+:</span></span></span></span></span><br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">$user
+= $userMapper-&gt;selectOne( $userMapper-&gt;getSchema()-&gt;getField( 'uid' ).'
+= :uid',&nbsp; array( ':uid' =&gt; 'Zelda' )
+);</span></span></span></span></span><br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New">//
+2. delete the user and all its related posts
+:</span></span></span></span></span><br>
+<span style="FONT-FAMILY:Courier New">$userMapper-&gt;delete( $user
+);</span><br>
+<br>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><span style="FONT-FAMILY:Courier New"><font face=Arial>Again
+all the details are encapsulated into the relation and the developer do not have
+to care about the details !<br>
+</font></span></span></span></span></span>
+<h2>
+  <span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial>3.
+  Appendices</span></span>
+</h2>
+<h2>
+</h2>
+<h3>
+  <span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial>3.1 Class
+  diagrams</span></span>
+</h3>
+<h3>
+</h3>
+PDO mapper class diagram :<br>
+<div id=cval style="PADDING:1em 0pt; TEXT-ALIGN:left">
+  <img src=pdocrud_images/d3vwdgb_36hhmmr2hr.png style="WIDTH:1141px; HEIGHT:639px">
+</div>
+PDO factory class diagram :<br>
+<div id=xp1. style="PADDING:1em 0pt; TEXT-ALIGN:left">
+  <img src=pdocrud_images/d3vwdgb_34dqxh3shh.png style="WIDTH:814px; HEIGHT:473px">
+</div>
+PDO SQL script class diagram :<br>
+<div id=d:ab style="PADDING:1em 0pt; TEXT-ALIGN:left">
+  <img src=pdocrud_images/d3vwdgb_35g4tfj3hp.png style="WIDTH:471px; HEIGHT:365px">
+</div>
+<span style="FONT-FAMILY:Courier New"><span style=FONT-FAMILY:Arial><br>
+</span></span></body>
+</html>

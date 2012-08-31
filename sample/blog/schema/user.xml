@@ -1,0 +1,13 @@
+<schema>
+<class name="User" table="users" />
+<attribute name="id" field="user_id" />
+<attribute name="uid" field="user_uid" required="true" />
+<attribute name="password" field="user_password" required="true" />
+<attribute name="firstName" field="user_firstname" required="true" />
+<attribute name="lastName" field="user_lastname" required="true" />
+<attribute name="email" field="user_email" />
+<attribute name="registration" field="user_registration" />
+<hasmany name="posts" class="Post" rel="User.id:Post.author" ondelete="delete" />
+<hasmany name="comments" class="Comment" rel="User.id:Comment.author" ondelete="delete" />
+<key name="id" />
+</schema>

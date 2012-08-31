@@ -1,0 +1,7 @@
+<schema>
+<class name="Tag" table="tags" />
+<attribute name="id" field="tag_id" />
+<attribute name="name" field="tag_name" required="true" />
+<hasandbelongsto name="posts" class="Post" rel="Tag.id:Post.id" table="posts_tags" cols="tag_id:post_id" />
+<key name="id" />
+</schema>
