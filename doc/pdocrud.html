@@ -468,8 +468,6 @@ $user6 = $userMapper-&gt;create( $user );
 
 <h3>2.2. Working with relations</h3>
 
-<h1>#</h1>
-
 <p>To illustrate relations, let's add the Post class to our blog.</p>
 
 <p>Let's define the following class, database and schema for the Post object :</p>
@@ -525,7 +523,7 @@ CREATE TABLE IF NOT EXISTS `posts` (
 &lt;/schema&gt;
 </code></pre>
 
-<p><strong><em>_2.2.1. Has One relation : Getting the author of a post :</em>_</strong></p>
+<p><strong>2.2.1. Has One relation : Getting the author of a post :</strong></p>
 
 <p>So we can get the author of a Post by calling the following :</p>
 
@@ -607,7 +605,7 @@ $post = $postMapper-&gt;selectOne(
 $user4 = $postMapper-&gt;hasOne( $post, 'author' ) );
 </code></pre>
 
-<p><strong><em>_2.2.2. Has Many relation : Getting the posts of a user :</em>_</strong></p>
+<p><strong>2.2.2. Has Many relation : Getting the posts of a user :</strong></p>
 
 <p>We can also get the posts of a given user by calling :</p>
 
@@ -691,7 +689,7 @@ $posts = $userMapper-&gt;hasMany( $user, 'posts' );
 <p>Now we do not need to know about the internals of the relation between User
 and Post anymore !</p>
 
-<p><strong><em>_2.2.3. Deleting with relations</em>_</strong></p>
+<p><strong>2.2.3. Deleting with relations</strong></p>
 
 <p>Let's see how relations can simplify the deletion of objects related through a
 has one or has many relation.</p>
@@ -838,11 +836,7 @@ not have to care about the details !</p>
 
 <h2>3. Appendices</h2>
 
-<h1>#</h1>
-
 <h3>3.1 Class diagrams</h3>
-
-<h2>#</h2>
 
 <p>PDO mapper class diagram :</p>
 
