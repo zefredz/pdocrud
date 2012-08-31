@@ -489,8 +489,6 @@ Create a new user :
 
 ###  2.2. Working with relations
 
-##
-
 To illustrate relations, let's add the Post class to our blog.
 
   
@@ -549,7 +547,7 @@ Let's define the following class, database and schema for the Post object :
 
   
 
-**__2.2.1. Has One relation : Getting the author of a post :__**
+**2.2.1. Has One relation : Getting the author of a post :**
 
   
 So we can get the author of a Post by calling the following :
@@ -636,7 +634,7 @@ the schema itself  :
     $user4 = $postMapper->hasOne( $post, 'author' ) );
 
   
-**__2.2.2. Has Many relation : Getting the posts of a user :__**
+**2.2.2. Has Many relation : Getting the posts of a user :**
   
 We can also get the posts of a given user by calling :
 
@@ -725,7 +723,7 @@ Now we do not need to know about the internals of the relation between User
 and Post anymore !
 
   
-**__2.2.3. Deleting with relations__**
+**2.2.3. Deleting with relations**
   
 Let's see how relations can simplify the deletion of objects related through a
 has one or has many relation.
@@ -878,11 +876,7 @@ not have to care about the details !
 
 ##  3. Appendices
 
-##
-
 ###  3.1 Class diagrams
-
-###
 
 PDO mapper class diagram :
 
