@@ -75,16 +75,16 @@ The ORM architecture described here is aimed to provide the following features :
 
 ###  Acronyms and conventions
 
-**PDO**: PHP Data Object  
-**ORM**: Object-Relationnal Mapper  
-**DSN**: Data Source Name  
-**CRUD**: Create Read Update Delete  
+**PDO**: PHP Data Object
+**ORM**: Object-Relationnal Mapper
+**DSN**: Data Source Name
+**CRUD**: Create Read Update Delete
   
 code source are in courier new
 
 ###  Warning
 
-**At this time the basic operations select(One/All), create, update, delete, hasOne and hasMany are already working. Planned feature : hasAndBelongsToOne/Many based on a n:m relation table.**  
+**At this time the basic operations select(One/All), create, update, delete, hasOne and hasMany are already working. Planned feature : hasAndBelongsToOne/Many based on a n:m relation table.**
   
 Note that the database and the tables used by the PDO-based ORM must exist in
 the DBMS.
@@ -111,9 +111,8 @@ PDOAbstractFactory interface :
 
       
     /**
-
-    * Abstract factory to implement for each PDO driver  
-    */  
+    * Abstract factory to implement for each PDO driver
+    */
     interface PDOAbstractFactory
 
     {
@@ -133,13 +132,12 @@ tested) and pgsql (not tested).
   
 PDOFactory methods summary :
 
-  
 
   * _static_ **register**( $scheme, $factory ), register a factory for a given driver (scheme) 
   * _static_ **getConnection**( $dsn ), get a connection for the given DSN
 
   
-The **PDOSQLScript **uses Ă  PDO connection to a database to execute an SQL
+The **PDOSQLScript** uses a PDO connection to a database to execute an SQL
 script :
 
   
@@ -903,6 +901,6 @@ PDO SQL script class diagram :
   
 
    [1]: pdomapper.png
-   [2]: pdocrudfactory.png
+   [2]: pdofactory.png
    [3]: pdosqlscript.png
 

@@ -1,0 +1,858 @@
+<h1>PDO-based Object Relational Mapper</h1>
+
+<p>This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.</p>
+
+<p>This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.</p>
+
+<p>You should have received a copy of the GNU General Public License
+along with this program.  If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.</p>
+
+<p><strong>IDEAS :</strong>
+- add triggers on relations for the other member of the relation (default: keep) :
+    - ondelete="(keep|delete)" done
+    - onupdate="(keep|update)"
+- use camelizer and pluralizer classes to compute missing table or field names
+- DatabaseToSchema class to convert an existing database table to a PDOMapperSchema</p>
+
+<p>DRAFT - WORKING COPY !!!!</p>
+
+<p>This document describes a simple ORM implementation based on PHP Data Object.</p>
+
+<p>@version     2012-08-31
+@copyright   2001-2012 Universite catholique de Louvain (UCL)
+@author      Frederic Minne <a href="&#x6D;&#97;&#105;&#x6C;&#116;&#111;:&#122;&#101;&#x66;&#x72;&#101;&#x64;&#122;&#64;&#x63;l&#x61;&#114;&#x6F;&#x6C;&#105;&#x6E;&#101;.&#110;&#x65;&#116;">&#122;&#101;&#x66;&#x72;&#101;&#x64;&#122;&#64;&#x63;l&#x61;&#114;&#x6F;&#x6C;&#105;&#x6E;&#101;.&#110;&#x65;&#116;</a>
+@license     http://creativecommons.org/licenses/by-nc-sa/2.0/be/</p>
+
+<pre><code>         CreativeCommons Attribution-Noncommercial-Share Alike 2.0
+</code></pre>
+
+<h2>0. Motivation and introduction</h2>
+
+<h3>Make the code more simple</h3>
+
+<p>Retreiving data from a database always uses similar SQL queries or PHP code.
+Abstraction layers are good the provide helpers to easily get data from the
+database but they do not reduce the amount of code needed for the queries
+themselves.</p>
+
+<p>Most of this code could be generated automaticaly and let the developpers
+focus on more important issues such as security, application architecture...</p>
+
+<h3>Make the code more secure</h3>
+
+<p>Automatic SQL queries generation could lead to more security since the
+verification and filtering of the data passed to and retreived from the
+database can be included in the automatic generation process (PDO is really
+great at this).</p>
+
+<p>Another advantage is that the SQL code is contained into one single class. So
+bugs and security flaws are easier to find and correct.</p>
+
+<h3>A simple ORM framework for PHP5</h3>
+
+<p>The ORM architecture described here is aimed to provide the following features :</p>
+
+<ol>
+<li>a lightweight easy to use and understand object-oriented ORM architecture </li>
+<li>based on PDO, simplexml and other PHP 5 powerfull features </li>
+<li>CRUD (Create Read Update Delete) objects based on PHP classes with no need to implement the SQL queries </li>
+<li><p>basic relations : </p>
+
+<ol>
+<li>hasone : object has another object mapped from the db mapped to one of his attribute </li>
+<li>hasmany : object has many objects mapped from the db mapped to one of his attribute </li>
+</ol></li>
+</ol>
+
+<h3>Acronyms and conventions</h3>
+
+<p><strong>PDO</strong>: PHP Data Object
+<strong>ORM</strong>: Object-Relationnal Mapper
+<strong>DSN</strong>: Data Source Name
+<strong>CRUD</strong>: Create Read Update Delete</p>
+
+<p>code source are in courier new</p>
+
+<h3>Warning</h3>
+
+<p><strong>At this time the basic operations select(One/All), create, update, delete, hasOne and hasMany are already working. Planned feature : hasAndBelongsToOne/Many based on a n:m relation table.</strong></p>
+
+<p>Note that the database and the tables used by the PDO-based ORM must exist in
+the DBMS.</p>
+
+<h2>1. Classes and API</h2>
+
+<h3>1.1. Utility classes : PDOFactory and PDOSQLScript</h3>
+
+<p>The <strong>PDOFactory</strong> class is not directly related with the PDO-based ORM. It is
+used to have the same DSN syntax for all the PDO drivers.</p>
+
+<pre><code>$dsn = 'mysql://user:password@host/database';
+
+$dsn = 'sqlite:/path/to/database';
+
+$dsn = 'sdlite::memory:';
+
+$pdo = PDOFactory::getConnection( $dsn );
+</code></pre>
+
+<p>The PDOFactory is based uses driver-specific factories implementing a
+PDOAbstractFactory interface :</p>
+
+<pre><code>/**
+* Abstract factory to implement for each PDO driver
+*/
+interface PDOAbstractFactory
+
+{
+
+    /**  
+     * Get a PDO connection for the given array of parameters  
+     * @param   array $dsnArray  
+     * @return  PDO database connection  
+     */  
+    public static function getConnection( $dsnArray );  
+}
+</code></pre>
+
+<p>At this time the PDOFactory provides drivers for mysql (tested), sqlite (not
+tested) and pgsql (not tested).</p>
+
+<p>PDOFactory methods summary :</p>
+
+<ul>
+<li><em>static</em> <strong>register</strong>( $scheme, $factory ), register a factory for a given driver (scheme) </li>
+<li><em>static</em> <strong>getConnection</strong>( $dsn ), get a connection for the given DSN</li>
+</ul>
+
+<p>The <strong>PDOSQLScript</strong> uses a PDO connection to a database to execute an SQL
+script :</p>
+
+<pre><code>$sqlScript = &lt;&lt;&lt;__SQL__
+
+CREATE TABLE `comment` (
+
+  `comment_id` int(11) NOT NULL auto_increment,
+  `comment_code_id` int(11) NOT NULL default '0',
+  `comment_author` varchar(255) NOT NULL default '',
+  `comment_email` varchar(255) default NULL,
+  `comment_title` varchar(255) NOT NULL default '',
+  `comment_time` datetime default '0000-00-00 00:00:00',
+  `comment_content` text NOT NULL,
+  PRIMARY KEY  (`comment_id`)
+);
+
+__SQL__;
+
+
+$pdoScript = new PDOScript( $pdo );
+
+$pdoScript-&gt;execute( $sqlScript );
+</code></pre>
+
+<h3>1.2. Mappable objects and PDOMapperSchema</h3>
+
+<p>A mappable object is an object with public attributes corresponding to fields
+in a database table with no constructor or a constructor with no parameters :</p>
+
+<pre><code>class Comment
+{
+    public $id;  
+    public $codeId;  
+    public $author;  
+    public $email;  
+    public $title;  
+    public $postedTime;  
+    public $content;  
+
+    public function dump()  
+    {  
+        var_dump( $this );  
+    }  
+}
+</code></pre>
+
+<p>The mapping information is given by a XML schema. The elements of the schema
+are :</p>
+
+<p><strong>attribute</strong>: denotes a required xml attribute or element
+<em>attribute</em> : denotes an optional xml attribute or element</p>
+
+<ul>
+<li><p>one <strong>class</strong> element with </p>
+
+<ul>
+<li><p><strong>name</strong>: class name (denoted "<em>current class</em>" in the following)</p></li>
+<li><p><strong>table</strong>: database table name</p></li>
+</ul></li>
+<li><p>one or more <strong>attribute</strong> element with </p>
+
+<ul>
+<li><strong>name</strong>: name of the attribute of the object of the current class to map </li>
+<li><strong>field</strong>: name of the corresponding field in the database table </li>
+<li><em>required</em>: this field is required and then could not be empty in the object </li>
+<li><em>default</em>: default value for the object attribute if missing </li>
+</ul></li>
+<li><p>one <strong>key</strong> element : </p>
+
+<ul>
+<li><strong>name</strong> : name of the attribute used as key (must be declared in an attribute element)</li>
+</ul></li>
+<li><p>zero or more <em>hasone/hasmany</em> elements with </p>
+
+<ul>
+<li><strong>name</strong>: name of the attribute to map to the hasone relation (must be declared in an attribute element) </li>
+<li><p><strong>class</strong>: name of the class to map (denoted "<em>hasone-related class</em>" in the following)</p></li>
+<li><p><em>rel</em>: description of the relation mapping in one of the following format : </p>
+
+<ul>
+<li><p>Class1.attr1:Class2.attr2 : use attribute attr1 from the current class and attribute attr2 from the hasone relatedclass</p></li>
+<li><p>Class1.attr or Class1.attr: : use attribute attr from class one and declared key for the hasone-related class </p></li>
+<li>:Class2.attr : use the key of the current class and the attr attribute of the hasone-related class </li>
+<li>empty or missing : use the declared key for both the current class and the hasone-related class </li>
+</ul></li>
+<li><p><em>ondelete</em>: trigger if the current object is deleted : value keep (default) or delete</p></li>
+</ul></li>
+</ul>
+
+<p>Sample schema for the Comment class :</p>
+
+<pre><code>$commentXMLSChema = &lt;&lt;&lt;__SCHEMA__
+
+&lt;schema&gt;
+
+    &lt;class name="Comment" table="comment" /&gt;  
+    &lt;attribute name="id" field="comment_id" /&gt;  
+    &lt;attribute name="codeId" field="comment_code_id" required="true" /&gt;  
+    &lt;attribute name="author" field="comment_author" required="true" /&gt;  
+    &lt;attribute name="email" field="comment_email" /&gt;  
+    &lt;attribute name="title" field="comment_title" required="true" /&gt;  
+    &lt;attribute name="postedTime" field="comment_time" default="{$date}" /&gt;  
+    &lt;attribute name="content" field="comment_content" /&gt;  
+    &lt;hasone name="author" class="User" rel="Comment.id:User.id" /&gt;  
+    &lt;key name="id" /&gt;  
+&lt;/schema&gt;
+
+__SCHEMA__;
+</code></pre>
+
+<p>The XML schema is parsed and represented by an object of the class
+PDOMapperSchema :</p>
+
+<pre><code>$commentSchemaObj = new PDOMapperSchema( $commentXMLSchema );
+
+$commentSchemaObj = PDOMapperSchema::fromString( $commentXMLSchema );
+</code></pre>
+
+<p>Alternatively, you can use a file :</p>
+
+<pre><code>$commentSchemaObj = PDOMapperSchema::fromFile( 'path/to/comment.xml' );
+</code></pre>
+
+<p>The <strong>PDOMapperSchema</strong> class provides methods to get informations about the
+schema :</p>
+
+<ul>
+<li><strong>getClass</strong>():string, return the name of the class of the mapped object</li>
+<li><strong>getTable</strong>():string, return the name of the table for the mapped object</li>
+<li><strong>getKey</strong>():string, return the name of the table key for the mapped object</li>
+<li><strong>getField</strong>( $attribute ):string, return the name of the field mapped by the given attribute</li>
+</ul>
+
+<p>Some informative methods used in PDOMapper internals are also provided as
+public methods :</p>
+
+<ul>
+<li><strong>getFieldList</strong>():array, return the list of all fields</li>
+<li><strong>getAttributeList</strong>():array, return the list of all attributes</li>
+<li><strong>isRequired</strong>( $attribute ):boolean, check if the attribute is required or not</li>
+<li><strong>hasDefaultValue</strong>( $attribute ):boolean, check if the given attribute has a default value</li>
+<li><strong>getDefaultValue</strong>( $attribute ):string, return the default value af the given attribute</li>
+<li><strong>hasOne</strong>( $attribute ):boolean, check if the attribute is part of a has one relation</li>
+<li><strong>getHasOneRelation</strong>( $attribute ):boolean, get the has one relation for the given attribute</li>
+<li><strong>countHasManyRelations</strong>():int, count the has one relations</li>
+<li><strong>getHasManyRelationList</strong>():array, get the has one relations</li>
+<li><strong>hasMany</strong>( $attribute ):boolean, check if the attribute is part of a has many relation</li>
+<li><strong>getHasManyRelation</strong>( $attribute ):boolean, get the has many relation for the given attribute</li>
+<li><strong>countHasManyRelation</strong>():int, count the has many relations</li>
+<li><strong>getHasManyRelationList</strong>():array, get the has many relations</li>
+</ul>
+
+<h3>1.3. PDOMapper</h3>
+
+<p>The <strong>PDOMapper</strong> is the main class of the PDO-ORM and implements the CRUD
+methods for the mapped objects represented by <strong>PDOMapperSchema</strong>:</p>
+
+<pre><code>$commentSchemaObj = new PDOMapperSchema( $commentXMLSchema );
+
+$commentMapper = new PDOMapper( $commentSchemaObj );
+</code></pre>
+
+<p>The <strong>PDOMapper</strong> declares the following CRUD methods :</p>
+
+<ul>
+<li><strong>select</strong>( $clause = '1', $params = null ):PDOStatement, select one or more objects from the database matching the optional clause and the given prepared query parameters (see PHP manual entry for PDOStatement for more information). If no clause given, returns all the objects from DB</li>
+<li><strong>update</strong>( $obj ):object, update the given object in the database</li>
+<li><strong>create</strong>( $obj ):object, create the given object in the database</li>
+<li><strong>delete</strong>( $obj ):boolean, delete the given object from the database</li>
+<li><strong>selectOne</strong>( $clause = "1", $params = null ):object or false, select one object of the current schema matching the given clause</li>
+<li><strong>selectAll</strong>( $clause = "1", $params = null ):array of objects, select all the objects of the current schema matching the given clause</li>
+<li><strong>hasOne</strong>( $obj, $name ):object or false, return the object of the has one relation</li>
+<li><strong>hasMany</strong>( $obj, $name ): array of object, returns the objects of the has many relation</li>
+<li><strong>deleteWhere</strong>( $clause = '1', $params = null ):boolean, delete objects giving a clause (warning : deleteWhere do not use triggers !)</li>
+<li><strong>deleteAll</strong>():boolean, delete all objects (warning : deleteAll do not use triggers !)</li>
+<li><strong>deleteHasOne</strong>( $obj, $name ):boolean, delete an object related to the current object through a has one relation</li>
+<li><strong>deleteHasMany</strong>( $obj, $name ):boolean, delete an object related to the current object through a has many relation</li>
+<li><strong>getSchema</strong>():PDOMapperSchema, return the current schema</li>
+</ul>
+
+<h3>1.4. PDOMapperBuilder</h3>
+
+<p>The <strong>PDOMapperBuilder</strong> is the registry and factory for the PDOMapper objects
+and made instanciation of mapped objects easier :</p>
+
+<p>First you have to instanciate the builder with the given PDO connection :</p>
+
+<pre><code>$dsn = 'mysql://root@localhost/pastecode';
+
+$mapperBuilder = new PDOMapperBuilder( PDOFactory::getConnection( $dsn ) );
+</code></pre>
+
+<p>Then you have to register the PDOMapperSchema for the mapped objects :</p>
+
+<p>$mapperBuilder->register( new PDOMapperSchema( $commentXMLSchema ) );</p>
+
+<p>and you can get the object mapper for a registered schema by using the
+getMapper method :</p>
+
+<pre><code>$commentMapper = $mapperBuilder-&gt;getMapper( 'Comment' );
+</code></pre>
+
+<p>You can get the retated schema through the getSchema method :</p>
+
+<pre><code>$commentMapperSchema = $mapperBuilder-&gt;getSchema( 'Comment' );
+</code></pre>
+
+<h2>2. Using the framework</h2>
+
+<p>Here is some usage sample for the framework. In this sample, we will consider
+a simple blog system with users (represented by a User class) and posts
+(represented by the Post class). A user can write many posts and a post
+belongs to one user.</p>
+
+<h3>2.1. Simple usage</h3>
+
+<p>Let's define the user class, database table and XML schema for the user :</p>
+
+<pre><code>class User
+
+{
+
+        public $id;  
+        public $uid;  
+        public $password;  
+        public $firstName;  
+        public $lastName;  
+        public $email;  
+        public $registration;  
+
+        public function dump()  
+        {  
+            var_dump( $this );  
+        }  
+}
+
+
+CREATE TABLE `users` (
+
+  `user_id` int(11) NOT NULL auto_increment,  
+  `user_uid` varchar(255) NOT NULL default '',  
+  `user_password` varchar(255) NOT NULL default '',  
+  `user_firstname` varchar(255) NOT NULL default '',  
+  `user_lastname` varchar(255) NOT NULL default '',  
+  `user_email` varchar(255) default NULL,  
+  `user_registration` datetime default '0000-00-00 00:00:00',  
+  PRIMARY KEY  (`user_id`)  
+);
+
+
+&lt;schema&gt;
+
+&lt;class name="User" table="users" /&gt;
+
+&lt;attribute name="id" field="user_id" /&gt;
+
+&lt;attribute name="uid" field="user_uid" required="true" /&gt;
+
+&lt;attribute name="password" field="user_password" required="true" /&gt;
+
+&lt;attribute name="firstName" field="user_firstname" required="true" /&gt;
+
+&lt;attribute name="lastName" field="user_lastname" required="true" /&gt;
+
+&lt;attribute name="email" field="user_email" /&gt;
+
+&lt;attribute name="registration" field="user_registration" /&gt;
+
+&lt;key name="id" /&gt;
+
+&lt;/schema&gt;
+</code></pre>
+
+<p>One can then register and get the mapper by calling the following methods :</p>
+
+<pre><code>$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+
+$userMapper = $mapperBuilder-&gt;getMapper( 'User' );
+</code></pre>
+
+<p>Then one can get the list of all users by calling PDOMapper::selectAll :</p>
+
+<pre><code>$users = $userMapper-&gt;selectAll();
+
+
+foreach ( $users as $user )
+
+{
+
+    $user-&gt;dump();  
+}
+</code></pre>
+
+<p>Select one user :</p>
+
+<pre><code>$user = $userMapper-&gt;selectOne( $userMapper-&gt;getSchema()-&gt;getField( 'id' ) . '= :id',  array( ':id' =&gt; 4 ) );
+</code></pre>
+
+<p>Update a user :</p>
+
+<pre><code>$user-&gt;uid = 'Zelda';
+
+$userMapper-&gt;update( $user );
+</code></pre>
+
+<p>Delete a user :</p>
+
+<pre><code>$userMapper-&gt;delete( $user );
+</code></pre>
+
+<p>Delete all users :</p>
+
+<pre><code>$userMapper-&gt;deleteAll();
+</code></pre>
+
+<p>Create a new user :</p>
+
+<pre><code>$user = new User;
+
+$user-&gt;uid = 'mithrandir';
+
+$user-&gt;password = 'L0rien';
+
+$user-&gt;firstName = 'Gandalf';
+
+$user-&gt;lastName = 'Le Gris';
+
+$user-&gt;email = 'gandalf@root.org';
+
+$user-&gt;registration = date( "Y-m-d H:i:s" );
+
+
+$user6 = $userMapper-&gt;create( $user );
+</code></pre>
+
+<h3>2.2. Working with relations</h3>
+
+<h1>#</h1>
+
+<p>To illustrate relations, let's add the Post class to our blog.</p>
+
+<p>Let's define the following class, database and schema for the Post object :</p>
+
+<pre><code>class Post
+
+{
+
+        public $id;  
+        public $chapo;  
+        public $author;  
+        public $title;  
+        public $postedTime;  
+        public $content;  
+
+        public function dump()  
+        {  
+            var_dump( $this );  
+        }  
+}
+
+
+CREATE TABLE IF NOT EXISTS `posts` (
+
+  `post_id` int(11) NOT NULL auto_increment,  
+  `post_author` int(11) NOT NULL default 0,  
+  `post_chapo` varchar(255) NOT NULL default '',  
+  `post_title` varchar(255) NOT NULL default '',  
+  `post_content` text NOT NULL,  
+  `post_time` datetime default '0000-00-00 00:00:00',  
+  PRIMARY KEY  (`post_id`)  
+);
+
+
+&lt;schema&gt;
+
+&lt;class name="Post" table="posts" /&gt;
+
+&lt;attribute name="id" field="post_id" /&gt;
+
+&lt;attribute name="author" field="post_author" required="true" /&gt;
+
+&lt;attribute name="title" field="post_title" required="true" /&gt;
+
+&lt;attribute name="chapo" field="post_chapo" /&gt;
+
+&lt;attribute name="content" field="post_content" /&gt;
+
+&lt;attribute name="postedTime" field="post_time" /&gt;
+
+&lt;key name="id" /&gt;
+
+&lt;/schema&gt;
+</code></pre>
+
+<p><strong><em>_2.2.1. Has One relation : Getting the author of a post :</em>_</strong></p>
+
+<p>So we can get the author of a Post by calling the following :</p>
+
+<pre><code>$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+
+$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+
+$userMapper = $mapperBuilder-&gt;getMapper( 'User' );
+
+$postMapper = $mapperBuilder-&gt;getMapper( 'Post' );
+
+
+// 1. load a given post by it's id :
+
+$post = $postsMapper-&gt;selectOne( 
+    $postMapper-&gt;getSchema()-&gt;getField( 'author').' = :id',  
+    array( ':id' =&gt; 1 ) );
+
+// 2. load the user with id corresponding to the Post author :
+
+$user4 = $userMapper-&gt;selectOne( 
+    $userMapper-&gt;getSchema()-&gt;getField( 'id' ).'= :uid', 
+    array( ':uid' =&gt; $post-&gt;author ) );
+</code></pre>
+
+<p>This method is great and simple but it has a flaw : we have to know about the
+way a user is connected to his posts in the database to write the code ! We
+can get rid of this limitation by defining a relation between User and Post :
+one Post is owned by one User. In our schema, this will be represented by
+<strong>ahasone</strong> element in the Post schema :</p>
+
+<pre><code>&lt;schema&gt;
+
+&lt;class name="Post" table="posts" /&gt;
+
+&lt;attribute name="id" field="post_id" /&gt;
+
+&lt;attribute name="author" field="post_author" required="true" /&gt;
+
+&lt;attribute name="title" field="post_title" required="true" /&gt;
+
+&lt;attribute name="chapo" field="post_chapo" /&gt;
+
+&lt;attribute name="content" field="post_content" /&gt;
+
+&lt;attribute name="postedTime" field="post_time" /&gt;
+
+**&lt;hasone name="author" class="User" rel="Post.author:User.id" /&gt;**
+&lt;key name="id" /&gt;
+
+&lt;/schema&gt;
+</code></pre>
+
+<p>The added hasone element means that "<em>one post is owned by one user and that
+this user is found by searching the user in the database having the post
+author has its id</em>".</p>
+
+<p>Using that, we can get the author of a post without the need to know the way
+the relation is represented in the database since this is encapsulated within
+the schema itself  :</p>
+
+<pre><code>$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+
+$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+
+$userMapper = $mapperBuilder-&gt;getMapper( 'User' );
+
+$postMapper = $mapperBuilder-&gt;getMapper( 'Post' );
+
+
+// 1. load a given post by it's id :
+
+$post = $postMapper-&gt;selectOne( 
+    $postMapper-&gt;getSchema()-&gt;getField( 'author').' = :id',  
+    array( ':id' =&gt; 1 ) );
+
+// 2. load the user with id corresponding to the Post author :
+
+$user4 = $postMapper-&gt;hasOne( $post, 'author' ) );
+</code></pre>
+
+<p><strong><em>_2.2.2. Has Many relation : Getting the posts of a user :</em>_</strong></p>
+
+<p>We can also get the posts of a given user by calling :</p>
+
+<pre><code>$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+
+$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+
+$userMapper = $mapperBuilder-&gt;getMapper( 'User' );
+
+$postMapper = $mapperBuilder-&gt;getMapper( 'Post' );
+
+
+// 1. load the user with the given user name :
+
+$user = $userMapper-&gt;selectOne( 
+    $userMapper-&gt;getSchema()-&gt;getField( 'uid' ).' = :uid',  
+    array( ':uid' =&gt; 'Zelda' ) );
+
+// 2. load the posts of the user :
+
+$posts = $postsMapper-&gt;selectAll( 
+    $postMapper-&gt;getSchema()-&gt;getField( 'author').' = :id',  
+    array( ':id' =&gt; $user-&gt;id ) );
+</code></pre>
+
+<p>Once again, it is great but we still need to know the relation between User
+and Post in the database to run the code. One more time, we are going to use
+relations to simplify the code. Let's add a has many relation between User and
+Post since one User can write several Posts :</p>
+
+<pre><code>&lt;schema&gt;
+
+&lt;class name="User" table="users" /&gt;
+
+&lt;attribute name="id" field="user_id" /&gt;
+
+&lt;attribute name="uid" field="user_uid" required="true" /&gt;
+
+&lt;attribute name="password" field="user_password" required="true" /&gt;
+
+&lt;attribute name="firstName" field="user_firstname" required="true" /&gt;
+
+&lt;attribute name="lastName" field="user_lastname" required="true" /&gt;
+
+&lt;attribute name="email" field="user_email" /&gt;
+
+&lt;attribute name="registration" field="user_registration" /&gt;
+
+**&lt;hasmany name="posts" class="Post" rel="User.id:Post.author" /&gt;**
+&lt;key name="id" /&gt;
+
+&lt;/schema&gt;
+</code></pre>
+
+<p>The added <strong>hasmany</strong> element means that "<em>one user owns many posts and that
+the posts of the user can be found by searching the posts in the database
+having the user id has their author</em>".</p>
+
+<p>We can get the posts of a given user by calling the following :</p>
+
+<pre><code>$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+
+$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+
+$userMapper = $mapperBuilder-&gt;getMapper( 'User' );
+
+$postMapper = $mapperBuilder-&gt;getMapper( 'Post' );
+
+
+// 1. load the user with the given user name :
+
+$user = $userMapper-&gt;selectOne( 
+    $userMapper-&gt;getSchema()-&gt;getField( 'uid' ).'= :uid',
+    array( ':uid' =&gt; 'Zelda' ) );
+
+// 2. load the posts of the user :
+
+$posts = $userMapper-&gt;hasMany( $user, 'posts' );
+</code></pre>
+
+<p>Now we do not need to know about the internals of the relation between User
+and Post anymore !</p>
+
+<p><strong><em>_2.2.3. Deleting with relations</em>_</strong></p>
+
+<p>Let's see how relations can simplify the deletion of objects related through a
+has one or has many relation.</p>
+
+<p>In our blog application, if one delete a user, all the posts of this user must
+be deleted. Without relation, we have to write the following.</p>
+
+<pre><code>$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+
+$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+
+$userMapper = $mapperBuilder-&gt;getMapper( 'User' );
+
+$postMapper = $mapperBuilder-&gt;getMapper( 'Post' );
+
+
+// 1. load the user with the given user name :
+
+$user = $userMapper-&gt;selectOne( 
+    $userMapper-&gt;getSchema()-&gt;getField( 'uid' ).' = :uid',  
+    array( ':uid' =&gt; 'Zelda' ) );
+
+// 2. delete the posts of the given user :
+
+$postsMapper-&gt;deleteWhere(
+    $postMapper-&gt;getSchema()-&gt;getField( 'author' ).' = :id', 
+    array( ':id' =&gt; $user-&gt;id ));
+
+// 3. delete the user :
+
+$userMapper-&gt;delete( $user );
+</code></pre>
+
+<p>With relation we can also write something like this :</p>
+
+<pre><code>$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+
+$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+
+$userMapper = $mapperBuilder-&gt;getMapper( 'User' );
+
+$postMapper = $mapperBuilder-&gt;getMapper( 'Post' );
+
+
+// 1. load the user with the given user name :
+
+$user = $userMapper-&gt;selectOne( 
+    $userMapper-&gt;getSchema()-&gt;getField( 'uid' ).' = :uid', 
+    array( ':uid' =&gt; 'Zelda' ) );
+
+// 2. load the posts of the user :
+
+$posts = $userMapper-&gt;hasMany( $user, 'posts' );
+
+
+foreach ( $posts as $post )
+
+{
+
+    $postMapper-&gt;delete( $post );  
+}
+</code></pre>
+
+<p>But this is not great since we have to perform one SQL query for each
+deletion. How can we optimize this ? By using deleteHasOne or deleteHasMany :</p>
+
+<pre><code>$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+
+$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+
+$userMapper = $mapperBuilder-&gt;getMapper( 'User' );
+
+$postMapper = $mapperBuilder-&gt;getMapper( 'Post' );
+
+
+// 1. load the user with the given user name :
+
+$user = $userMapper-&gt;selectOne( 
+    $userMapper-&gt;getSchema()-&gt;getField( 'uid' ).' = :uid', 
+    array( ':uid' =&gt; 'Zelda' ) );
+
+// 2. delete the user posts :
+
+$userMapper-&gt;deleteHasMany( $user, 'posts' );
+
+// 3. delete the user :
+
+$userMapper-&gt;delete( $user );
+</code></pre>
+
+<p>But we still have to delete the posts "by hand". In fact we can do something
+better by using relation triggers :</p>
+
+<pre><code>&lt;schema&gt;
+
+&lt;class name="User" table="users" /&gt;
+
+&lt;attribute name="id" field="user_id" /&gt;
+
+&lt;attribute name="uid" field="user_uid" required="true" /&gt;
+
+&lt;attribute name="password" field="user_password" required="true" /&gt;
+
+&lt;attribute name="firstName" field="user_firstname" required="true" /&gt;
+
+&lt;attribute name="lastName" field="user_lastname" required="true" /&gt;
+
+&lt;attribute name="email" field="user_email" /&gt;
+
+&lt;attribute name="registration" field="user_registration" /&gt;
+
+**&lt;hasmany name="posts" class="Post" rel="User.id:Post.author" ondelete="delete" /&gt;**
+&lt;key name="id" /&gt;
+
+&lt;/schema&gt;
+</code></pre>
+
+<p>The ondelete="delete" attribute tells pdocrud to delete all the posts of the
+user when the user is delete. This will be executed automatically by the
+delete method of $userMapper :</p>
+
+<pre><code>$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+
+$mapperBuilder-&gt;register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+
+$userMapper = $mapperBuilder-&gt;getMapper( 'User' );
+
+$postMapper = $mapperBuilder-&gt;getMapper( 'Post' );
+
+
+// 1. load the user with the given user name :
+
+$user = $userMapper-&gt;selectOne( 
+    $userMapper-&gt;getSchema()-&gt;getField( 'uid' ).' = :uid',  
+    array( ':uid' =&gt; 'Zelda' ) );
+
+// 2. delete the user and all its related posts :
+
+$userMapper-&gt;delete( $user );
+</code></pre>
+
+<p>Again all the details are encapsulated into the relation and the developer do
+not have to care about the details !</p>
+
+<h2>3. Appendices</h2>
+
+<h1>#</h1>
+
+<h3>3.1 Class diagrams</h3>
+
+<h2>#</h2>
+
+<p>PDO mapper class diagram :</p>
+
+<p><img src="pdomapper.png" alt="" /></p>
+
+<p>PDO factory class diagram :</p>
+
+<p><img src="pdofactory.png" alt="" /></p>
+
+<p>PDO SQL script class diagram :</p>
+
+<p><img src="pdosqlscript.png" alt="" /></p>
