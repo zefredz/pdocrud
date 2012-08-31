@@ -1,16 +1,17 @@
 <?php // $Id$
 
     // vim: expandtab sw=4 ts=4 sts=4:
-    
-    if ( count( get_included_files() ) == 1 )
-    {
-        die( 'The file ' . basename(__FILE__) . ' cannot be accessed directly, use include instead' );
-    }
 
     /**
      * Utility class to convert between camel case and underscore notations
      *
      * @access public
+     * @version     1.0
+     * @copyright   2001-2012 Universite catholique de Louvain (UCL)
+     * @author      Frederic Minne <zefredz@gmail.com>
+     * @license     https://www.gnu.org/licenses/lgpl.html
+     *              GNU LESSER GENERAL PUBLIC LICENSE version 3 or later
+     * @package     pdocrud.utils
      */
     class Camelizer
     {
@@ -50,4 +51,4 @@
             return strtolower($text);
         }
     }
-?>
+

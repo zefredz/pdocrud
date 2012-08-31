@@ -5,18 +5,13 @@
     /**
      * PDOMapperBuilder
      *
-     * @version     $Revision$
-     * @copyright   2001-2007 Universite catholique de Louvain (UCL)
-     * @author      Frederic Minne <zefredz@claroline.net>
-     * @license     http://www.gnu.org/copyleft/gpl.html
-     *              GNU GENERAL PUBLIC LICENSE version 2 or later
+     * @version     1.0
+     * @copyright   2001-2012 Universite catholique de Louvain (UCL)
+     * @author      Frederic Minne <zefredz@gmail.com>
+     * @license     https://www.gnu.org/licenses/lgpl.html
+     *              GNU LESSER GENERAL PUBLIC LICENSE version 3 or later
      * @package     pdocrud
      */
-
-    if ( count( get_included_files() ) == 1 )
-    {
-        die( 'The file ' . basename(__FILE__) . ' cannot be accessed directly, use include instead' );
-    }
 
     /**
      * PDOMapperBuilder creates PDOMapper objects describe by the given xml schema
