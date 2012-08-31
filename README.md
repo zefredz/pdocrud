@@ -3,18 +3,18 @@ pdocrud
 
 An ORM based on PDO written years ago
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #  PDO-based Object Relational Mapper
 
@@ -32,11 +32,10 @@ DRAFT - WORKING COPY !!!!
 This document describes a simple ORM implementation based on PHP Data Object.
 
   
-@version     1.0 2012-08-31
-@copyright   2001-2012 Universite catholique de Louvain (UCL)
-@author      Frederic Minne <zefredz@claroline.net>
-@license     http://creativecommons.org/licenses/by-nc-sa/2.0/be/
-             CreativeCommons Attribution-Noncommercial-Share Alike 2.0
+    @version     1.0 2012-08-31
+    @copyright   2001-2012 Universite catholique de Louvain (UCL)
+    @author      Frederic Minne <zefredz@claroline.net>
+    @license     http://creativecommons.org/licenses/by-nc-sa/2.0/be/ CreativeCommons Attribution-Noncommercial-Share Alike 2.0
 
 ##  0. Motivation and introduction
 
