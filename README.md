@@ -80,10 +80,10 @@ The ORM architecture described here is aimed to provide the following features
 
 ###  Acronyms and conventions
 
-**PDO **: PHP Data Object
-**ORM **: Object-Relationnal Mapper
-**DSN **: Data Source Name
-**CRUD **: Create Read Update Delete
+* **PDO**: PHP Data Object
+* **ORM**: Object-Relationnal Mapper
+* **DSN**: Data Source Name
+* **CRUD**: Create Read Update Delete
   
 code source are in courier new
 
