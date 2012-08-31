@@ -16,7 +16,7 @@ This document describes a simple ORM implementation based on PHP Data Object.
   
 @version     2007-12-10
 
-@copyright   2001-2007 Universite catholique de Louvain (UCL)
+@copyright   2001-2012 Universite catholique de Louvain (UCL)
 
 @author      Frederic Minne <zefredz@claroline.net>
 
@@ -89,34 +89,34 @@ The **PDOFactory **class is not directly related with the PDO-based ORM. It is
 used to have the same DSN syntax for all the PDO drivers.
 
   
-$dsn = 'mysql://user:password@host/database';
+    $dsn = 'mysql://user:password@host/database';
 
-$dsn = 'sqlite:/path/to/database';
+    $dsn = 'sqlite:/path/to/database';
 
-$dsn = 'sdlite::memory:';
+    $dsn = 'sdlite::memory:';
 
-$pdo = PDOFactory::getConnection( $dsn );
+    $pdo = PDOFactory::getConnection( $dsn );
 
-  
-The PDOFactory is based uses driver-specific factories implementing a
-PDOAbstractFactory interface :
+      
+    The PDOFactory is based uses driver-specific factories implementing a
+    PDOAbstractFactory interface :
 
-  
-/**
+      
+    /**
 
-* Abstract factory to implement for each PDO driver  
-*/  
-interface PDOAbstractFactory
+    * Abstract factory to implement for each PDO driver  
+    */  
+    interface PDOAbstractFactory
 
-{
+    {
 
-    /**  
-     * Get a PDO connection for the given array of parameters  
-     * @param   array $dsnArray  
-     * @return  PDO database connection  
-     */  
-    public static function getConnection( $dsnArray );  
-}
+        /**  
+         * Get a PDO connection for the given array of parameters  
+         * @param   array $dsnArray  
+         * @return  PDO database connection  
+         */  
+        public static function getConnection( $dsnArray );  
+    }
 
   
 At this time the PDOFactory provides drivers for mysql (tested), sqlite (not
@@ -135,26 +135,26 @@ The **PDOSQLScript **uses Ă  PDO connection to a database to execute an SQL
 script :
 
   
-$sqlScript = <<<__SQL__
+    $sqlScript = <<<__SQL__
 
-CREATE TABLE `comment` (
+    CREATE TABLE `comment` (
 
-  `comment_id` int(11) NOT NULL auto_increment,  
-  `comment_code_id` int(11) NOT NULL default '0',  
-  `comment_author` varchar(255) NOT NULL default '',  
-  `comment_email` varchar(255) default NULL,  
-  `comment_title` varchar(255) NOT NULL default '',  
-  `comment_time` datetime default '0000-00-00 00:00:00',  
-  `comment_content` text NOT NULL,  
-  PRIMARY KEY  (`comment_id`)  
-);
+      `comment_id` int(11) NOT NULL auto_increment,  
+      `comment_code_id` int(11) NOT NULL default '0',  
+      `comment_author` varchar(255) NOT NULL default '',  
+      `comment_email` varchar(255) default NULL,  
+      `comment_title` varchar(255) NOT NULL default '',  
+      `comment_time` datetime default '0000-00-00 00:00:00',  
+      `comment_content` text NOT NULL,  
+      PRIMARY KEY  (`comment_id`)  
+    );
 
-__SQL__;
+    __SQL__;
 
-  
-$pdoScript = new PDOScript( $pdo );
+      
+    $pdoScript = new PDOScript( $pdo );
 
-$pdoScript->execute( $sqlScript );
+    $pdoScript->execute( $sqlScript );
 
 ###  1.2. Mappable objects and PDOMapperSchema
 
@@ -223,38 +223,38 @@ _attribute _: denotes an optional xml attribute or element
 Sample schema for the Comment class :
 
   
-$commentXMLSChema = <<<__SCHEMA__
+    $commentXMLSChema = <<<__SCHEMA__
 
-<schema>
+    <schema>
 
-    <class name="Comment" table="comment" />  
-    <attribute name="id" field="comment_id" />  
-    <attribute name="codeId" field="comment_code_id" required="true" />  
-    <attribute name="author" field="comment_author" required="true" />  
-    <attribute name="email" field="comment_email" />  
-    <attribute name="title" field="comment_title" required="true" />  
-    <attribute name="postedTime" field="comment_time" default="{$date}" />  
-    <attribute name="content" field="comment_content" />  
-    <hasone name="author" class="User" rel="Comment.id:User.id" />  
-    <key name="id" />  
-</schema>
+        <class name="Comment" table="comment" />  
+        <attribute name="id" field="comment_id" />  
+        <attribute name="codeId" field="comment_code_id" required="true" />  
+        <attribute name="author" field="comment_author" required="true" />  
+        <attribute name="email" field="comment_email" />  
+        <attribute name="title" field="comment_title" required="true" />  
+        <attribute name="postedTime" field="comment_time" default="{$date}" />  
+        <attribute name="content" field="comment_content" />  
+        <hasone name="author" class="User" rel="Comment.id:User.id" />  
+        <key name="id" />  
+    </schema>
 
-__SCHEMA__;
+    __SCHEMA__;
 
   
 The XML schema is parsed and represented by an object of the class
 PDOMapperSchema :
 
   
-$commentSchemaObj = new PDOMapperSchema( $commentXMLSchema );
+    $commentSchemaObj = new PDOMapperSchema( $commentXMLSchema );
 
-$commentSchemaObj = PDOMapperSchema::fromString( $commentXMLSchema );
+    $commentSchemaObj = PDOMapperSchema::fromString( $commentXMLSchema );
 
   
 Alternatively, you can use a file :
 
   
-$commentSchemaObj = PDOMapperSchema::fromFile( 'path/to/comment.xml' );
+    $commentSchemaObj = PDOMapperSchema::fromFile( 'path/to/comment.xml' );
 
   
 The **PDOMapperSchema **class provides methods to get informations about the
@@ -293,9 +293,9 @@ The **PDOMapper **is the main class of the PDO-ORM and implements the CRUD
 methods for the mapped objects represented by **PDOMapperSchema **:
 
   
-$commentSchemaObj = new PDOMapperSchema( $commentXMLSchema );
+    $commentSchemaObj = new PDOMapperSchema( $commentXMLSchema );
 
-$commentMapper = new PDOMapper( $commentSchemaObj );
+    $commentMapper = new PDOMapper( $commentSchemaObj );
 
   
 The **PDOMapper **declares the following CRUD methods :
@@ -326,9 +326,9 @@ and made instanciation of mapped objects easier :
 First you have to instanciate the builder with the given PDO connection :
 
   
-$dsn = 'mysql://root@localhost/pastecode';
+    $dsn = 'mysql://root@localhost/pastecode';
 
-$mapperBuilder = new PDOMapperBuilder( PDOFactory::getConnection( $dsn ) );
+    $mapperBuilder = new PDOMapperBuilder( PDOFactory::getConnection( $dsn ) );
 
   
 Then you have to register the PDOMapperSchema for the mapped objects :
@@ -341,13 +341,13 @@ and you can get the object mapper for a registered schema by using the
 getMapper method :
 
         
-$commentMapper = $mapperBuilder->getMapper( 'Comment' );
+    $commentMapper = $mapperBuilder->getMapper( 'Comment' );
 
   
 You can get the retated schema through the getSchema method :
 
   
-$commentMapperSchema = $mapperBuilder->getSchema( 'Comment' );
+    $commentMapperSchema = $mapperBuilder->getSchema( 'Comment' );
 
 ##  2. Using the framework
 
@@ -361,129 +361,128 @@ belongs to one user.
 Let's define the user class, database table and XML schema for the user :
 
   
-class User
+    class User
 
-{
+    {
 
-        public $id;  
-        public $uid;  
-        public $password;  
-        public $firstName;  
-        public $lastName;  
-        public $email;  
-        public $registration;  
-  
-        public function dump()  
-        {  
-            var_dump( $this );  
-        }  
-}
-
-  
-CREATE TABLE `users` (
-
-  `user_id` int(11) NOT NULL auto_increment,  
-  `user_uid` varchar(255) NOT NULL default '',  
-  `user_password` varchar(255) NOT NULL default '',  
-  `user_firstname` varchar(255) NOT NULL default '',  
-  `user_lastname` varchar(255) NOT NULL default '',  
-  `user_email` varchar(255) default NULL,  
-  `user_registration` datetime default '0000-00-00 00:00:00',  
-  PRIMARY KEY  (`user_id`)  
-);
+            public $id;  
+            public $uid;  
+            public $password;  
+            public $firstName;  
+            public $lastName;  
+            public $email;  
+            public $registration;  
+      
+            public function dump()  
+            {  
+                var_dump( $this );  
+            }  
+    }
 
   
-<schema>
+    CREATE TABLE `users` (
 
-<class name="User" table="users" />
+      `user_id` int(11) NOT NULL auto_increment,  
+      `user_uid` varchar(255) NOT NULL default '',  
+      `user_password` varchar(255) NOT NULL default '',  
+      `user_firstname` varchar(255) NOT NULL default '',  
+      `user_lastname` varchar(255) NOT NULL default '',  
+      `user_email` varchar(255) default NULL,  
+      `user_registration` datetime default '0000-00-00 00:00:00',  
+      PRIMARY KEY  (`user_id`)  
+    );
 
-<attribute name="id" field="user_id" />
+  
+    <schema>
 
-<attribute name="uid" field="user_uid" required="true" />
+    <class name="User" table="users" />
 
-<attribute name="password" field="user_password" required="true" />
+    <attribute name="id" field="user_id" />
 
-<attribute name="firstName" field="user_firstname" required="true" />
+    <attribute name="uid" field="user_uid" required="true" />
 
-<attribute name="lastName" field="user_lastname" required="true" />
+    <attribute name="password" field="user_password" required="true" />
 
-<attribute name="email" field="user_email" />
+    <attribute name="firstName" field="user_firstname" required="true" />
 
-<attribute name="registration" field="user_registration" />
+    <attribute name="lastName" field="user_lastname" required="true" />
 
-<key name="id" />
+    <attribute name="email" field="user_email" />
 
-</schema>
+    <attribute name="registration" field="user_registration" />
+
+    <key name="id" />
+
+    </schema>
 
   
 One can then register and get the mapper by calling the following methods :
 
   
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
 
-$userMapper = $mapperBuilder->getMapper( 'User' );
+    $userMapper = $mapperBuilder->getMapper( 'User' );
 
   
 Then one can get the list of all users by calling PDOMapper::selectAll :
 
   
-$users = $userMapper->selectAll();
+    $users = $userMapper->selectAll();
 
-          
-foreach ( $users as $user )
+              
+    foreach ( $users as $user )
 
-{
+    {
 
-    $user->dump();  
-}
+        $user->dump();  
+    }
 
   
 Select one user :
 
   
-$user = $userMapper->selectOne( $userMapper->getSchema()->getField( 'id' ) . '
-= :id',  array( ':id' => 4 ) );
+    $user = $userMapper->selectOne( $userMapper->getSchema()->getField( 'id' ) . '= :id',  array( ':id' => 4 ) );
 
   
 Update a user :
 
   
-$user->uid = 'Zelda';
+    $user->uid = 'Zelda';
 
-$userMapper->update( $user );
+    $userMapper->update( $user );
 
   
 Delete a user :
 
   
-$userMapper->delete( $user );
+    $userMapper->delete( $user );
 
   
 Delete all users :
 
   
-$userMapper->deleteAll();
+    $userMapper->deleteAll();
 
   
 Create a new user :
 
       
-$user = new User;
+    $user = new User;
 
-$user->uid = 'mithrandir';
+    $user->uid = 'mithrandir';
 
-$user->password = 'L0rien';
+    $user->password = 'L0rien';
 
-$user->firstName = 'Gandalf';
+    $user->firstName = 'Gandalf';
 
-$user->lastName = 'Le Gris';
+    $user->lastName = 'Le Gris';
 
-$user->email = 'gandalf@root.org';
+    $user->email = 'gandalf@root.org';
 
-$user->registration = date( "Y-m-d H:i:s" );
+    $user->registration = date( "Y-m-d H:i:s" );
 
-       
-$user6 = $userMapper->create( $user );
+           
+    $user6 = $userMapper->create( $user );
 
 ###  2.2. Working with relations
 
@@ -495,55 +494,55 @@ To illustrate relations, let's add the Post class to our blog.
 Let's define the following class, database and schema for the Post object :
 
   
-class Post
+    class Post
 
-{
+    {
 
-        public $id;  
-        public $chapo;  
-        public $author;  
-        public $title;  
-        public $postedTime;  
-        public $content;  
-  
-        public function dump()  
-        {  
-            var_dump( $this );  
-        }  
-}
-
-  
-CREATE TABLE IF NOT EXISTS `posts` (
-
-  `post_id` int(11) NOT NULL auto_increment,  
-  `post_author` int(11) NOT NULL default 0,  
-  `post_chapo` varchar(255) NOT NULL default '',  
-  `post_title` varchar(255) NOT NULL default '',  
-  `post_content` text NOT NULL,  
-  `post_time` datetime default '0000-00-00 00:00:00',  
-  PRIMARY KEY  (`post_id`)  
-);
+            public $id;  
+            public $chapo;  
+            public $author;  
+            public $title;  
+            public $postedTime;  
+            public $content;  
+      
+            public function dump()  
+            {  
+                var_dump( $this );  
+            }  
+    }
 
   
-<schema>
+    CREATE TABLE IF NOT EXISTS `posts` (
 
-<class name="Post" table="posts" />
+      `post_id` int(11) NOT NULL auto_increment,  
+      `post_author` int(11) NOT NULL default 0,  
+      `post_chapo` varchar(255) NOT NULL default '',  
+      `post_title` varchar(255) NOT NULL default '',  
+      `post_content` text NOT NULL,  
+      `post_time` datetime default '0000-00-00 00:00:00',  
+      PRIMARY KEY  (`post_id`)  
+    );
 
-<attribute name="id" field="post_id" />
+  
+    <schema>
 
-<attribute name="author" field="post_author" required="true" />
+    <class name="Post" table="posts" />
 
-<attribute name="title" field="post_title" required="true" />
+    <attribute name="id" field="post_id" />
 
-<attribute name="chapo" field="post_chapo" />
+    <attribute name="author" field="post_author" required="true" />
 
-<attribute name="content" field="post_content" />
+    <attribute name="title" field="post_title" required="true" />
 
-<attribute name="postedTime" field="post_time" />
+    <attribute name="chapo" field="post_chapo" />
 
-<key name="id" />
+    <attribute name="content" field="post_content" />
 
-</schema>
+    <attribute name="postedTime" field="post_time" />
+
+    <key name="id" />
+
+    </schema>
 
   
 
@@ -553,24 +552,26 @@ CREATE TABLE IF NOT EXISTS `posts` (
 So we can get the author of a Post by calling the following :
 
   
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
 
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
 
-$userMapper = $mapperBuilder->getMapper( 'User' );
+    $userMapper = $mapperBuilder->getMapper( 'User' );
 
-$postMapper = $mapperBuilder->getMapper( 'Post' );
+    $postMapper = $mapperBuilder->getMapper( 'Post' );
 
-  
-// 1. load a given post by it's id :
+      
+    // 1. load a given post by it's id :
 
-$post = $postsMapper->selectOne( $postMapper->getSchema()->getField( 'author'
-).' = :id',  array( ':id' => 1 ) );
+    $post = $postsMapper->selectOne( 
+        $postMapper->getSchema()->getField( 'author').' = :id',  
+        array( ':id' => 1 ) );
 
-// 2. load the user with id corresponding to the Post author :
+    // 2. load the user with id corresponding to the Post author :
 
-$user4 = $userMapper->selectOne( $userMapper->getSchema()->getField( 'id' ).'
-= :uid',  array( ':uid' => $post->author ) );
+    $user4 = $userMapper->selectOne( 
+        $userMapper->getSchema()->getField( 'id' ).'= :uid', 
+        array( ':uid' => $post->author ) );
 
   
 This method is great and simple but it has a flaw : we have to know about the
@@ -580,26 +581,26 @@ one Post is owned by one User. In our schema, this will be represented by
 **ahasone **element in the Post schema :
 
   
-<schema>
+    <schema>
 
-<class name="Post" table="posts" />
+    <class name="Post" table="posts" />
 
-<attribute name="id" field="post_id" />
+    <attribute name="id" field="post_id" />
 
-<attribute name="author" field="post_author" required="true" />
+    <attribute name="author" field="post_author" required="true" />
 
-<attribute name="title" field="post_title" required="true" />
+    <attribute name="title" field="post_title" required="true" />
 
-<attribute name="chapo" field="post_chapo" />
+    <attribute name="chapo" field="post_chapo" />
 
-<attribute name="content" field="post_content" />
+    <attribute name="content" field="post_content" />
 
-<attribute name="postedTime" field="post_time" />
+    <attribute name="postedTime" field="post_time" />
 
-**<hasone name="author" class="User" rel="Post.author:User.id" />**  
-<key name="id" />
+    **<hasone name="author" class="User" rel="Post.author:User.id" />**  
+    <key name="id" />
 
-</schema>
+    </schema>
 
   
 The added hasone element means that "_one post is owned by one user and that
@@ -612,23 +613,24 @@ the relation is represented in the database since this is encapsulated within
 the schema itself  :
 
   
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
 
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
 
-$userMapper = $mapperBuilder->getMapper( 'User' );
+    $userMapper = $mapperBuilder->getMapper( 'User' );
 
-$postMapper = $mapperBuilder->getMapper( 'Post' );
+    $postMapper = $mapperBuilder->getMapper( 'Post' );
 
-  
-// 1. load a given post by it's id :
+      
+    // 1. load a given post by it's id :
 
-$post = $postMapper->selectOne( $postMapper->getSchema()->getField( 'author'
-).' = :id',  array( ':id' => 1 ) );
+    $post = $postMapper->selectOne( 
+        $postMapper->getSchema()->getField( 'author').' = :id',  
+        array( ':id' => 1 ) );
 
-// 2. load the user with id corresponding to the Post author :
+    // 2. load the user with id corresponding to the Post author :
 
-$user4 = $postMapper->hasOne( $post, 'author' ) );
+    $user4 = $postMapper->hasOne( $post, 'author' ) );
 
   
 **__2.2.2. Has Many relation : Getting the posts of a user :__**  
@@ -636,24 +638,26 @@ $user4 = $postMapper->hasOne( $post, 'author' ) );
 We can also get the posts of a given user by calling :
 
   
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
 
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
 
-$userMapper = $mapperBuilder->getMapper( 'User' );
+    $userMapper = $mapperBuilder->getMapper( 'User' );
 
-$postMapper = $mapperBuilder->getMapper( 'Post' );
+    $postMapper = $mapperBuilder->getMapper( 'Post' );
 
-  
-// 1. load the user with the given user name :
+      
+    // 1. load the user with the given user name :
 
-$user = $userMapper->selectOne( $userMapper->getSchema()->getField( 'uid' ).'
-= :uid',  array( ':uid' => 'Zelda' ) );
+    $user = $userMapper->selectOne( 
+        $userMapper->getSchema()->getField( 'uid' ).' = :uid',  
+        array( ':uid' => 'Zelda' ) );
 
-// 2. load the posts of the user :
+    // 2. load the posts of the user :
 
-$posts = $postsMapper->selectAll( $postMapper->getSchema()->getField( 'author'
-).' = :id',  array( ':id' => $user->id ) );
+    $posts = $postsMapper->selectAll( 
+        $postMapper->getSchema()->getField( 'author').' = :id',  
+        array( ':id' => $user->id ) );
 
   
 Once again, it is great but we still need to know the relation between User
@@ -662,28 +666,28 @@ relations to simplify the code. Let's add a has many relation between User and
 Post since one User can write several Posts :
 
   
-<schema>
+    <schema>
 
-<class name="User" table="users" />
+    <class name="User" table="users" />
 
-<attribute name="id" field="user_id" />
+    <attribute name="id" field="user_id" />
 
-<attribute name="uid" field="user_uid" required="true" />
+    <attribute name="uid" field="user_uid" required="true" />
 
-<attribute name="password" field="user_password" required="true" />
+    <attribute name="password" field="user_password" required="true" />
 
-<attribute name="firstName" field="user_firstname" required="true" />
+    <attribute name="firstName" field="user_firstname" required="true" />
 
-<attribute name="lastName" field="user_lastname" required="true" />
+    <attribute name="lastName" field="user_lastname" required="true" />
 
-<attribute name="email" field="user_email" />
+    <attribute name="email" field="user_email" />
 
-<attribute name="registration" field="user_registration" />
+    <attribute name="registration" field="user_registration" />
 
-**<hasmany name="posts" class="Post" rel="User.id:Post.author" />**  
-<key name="id" />
+    **<hasmany name="posts" class="Post" rel="User.id:Post.author" />**  
+    <key name="id" />
 
-</schema>
+    </schema>
 
   
 The added **hasmany **element means that "_one user owns many posts and that
@@ -694,23 +698,24 @@ having the user id has their author_".
 We can get the posts of a given user by calling the following :
 
   
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
 
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
 
-$userMapper = $mapperBuilder->getMapper( 'User' );
+    $userMapper = $mapperBuilder->getMapper( 'User' );
 
-$postMapper = $mapperBuilder->getMapper( 'Post' );
+    $postMapper = $mapperBuilder->getMapper( 'Post' );
 
-  
-// 1. load the user with the given user name :
+      
+    // 1. load the user with the given user name :
 
-$user = $userMapper->selectOne( $userMapper->getSchema()->getField( 'uid' ).'
-= :uid',  array( ':uid' => 'Zelda' ) );
+    $user = $userMapper->selectOne( 
+        $userMapper->getSchema()->getField( 'uid' ).'= :uid',
+        array( ':uid' => 'Zelda' ) );
 
-// 2. load the posts of the user :
-
-$posts = $userMapper->hasMany( $user, 'posts' );
+    // 2. load the posts of the user :
+    
+    $posts = $userMapper->hasMany( $user, 'posts' );
 
   
 Now we do not need to know about the internals of the relation between User
@@ -727,113 +732,117 @@ In our blog application, if one delete a user, all the posts of this user must
 be deleted. Without relation, we have to write the following.
 
   
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
 
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
 
-$userMapper = $mapperBuilder->getMapper( 'User' );
+    $userMapper = $mapperBuilder->getMapper( 'User' );
 
-$postMapper = $mapperBuilder->getMapper( 'Post' );
+    $postMapper = $mapperBuilder->getMapper( 'Post' );
 
-  
-// 1. load the user with the given user name :
+      
+    // 1. load the user with the given user name :
 
-$user = $userMapper->selectOne( $userMapper->getSchema()->getField( 'uid' ).'
-= :uid',  array( ':uid' => 'Zelda' ) );
+    $user = $userMapper->selectOne( 
+        $userMapper->getSchema()->getField( 'uid' ).' = :uid',  
+        array( ':uid' => 'Zelda' ) );
 
-// 2. delete the posts of the given user :
+    // 2. delete the posts of the given user :
 
-$postsMapper->deleteWhere($postMapper->getSchema()->getField( 'author' ).' =
-:id',  array( ':id' => $user->id ));
+    $postsMapper->deleteWhere(
+        $postMapper->getSchema()->getField( 'author' ).' = :id', 
+        array( ':id' => $user->id ));
 
-// 3. delete the user :
+    // 3. delete the user :
 
-$userMapper->delete( $user );
+    $userMapper->delete( $user );
 
   
 With relation we can also write something like this :
 
   
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
 
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
 
-$userMapper = $mapperBuilder->getMapper( 'User' );
+    $userMapper = $mapperBuilder->getMapper( 'User' );
 
-$postMapper = $mapperBuilder->getMapper( 'Post' );
-
-  
-// 1. load the user with the given user name :
-
-$user = $userMapper->selectOne( $userMapper->getSchema()->getField( 'uid' ).'
-= :uid',  array( ':uid' => 'Zelda' ) );
-
-// 2. load the posts of the user :
-
-$posts = $userMapper->hasMany( $user, 'posts' );
+    $postMapper = $mapperBuilder->getMapper( 'Post' );
 
   
-foreach ( $posts as $post )
+    // 1. load the user with the given user name :
 
-{
+    $user = $userMapper->selectOne( 
+        $userMapper->getSchema()->getField( 'uid' ).' = :uid', 
+        array( ':uid' => 'Zelda' ) );
 
-    $postMapper->delete( $post );  
-}
+    // 2. load the posts of the user :
+
+    $posts = $userMapper->hasMany( $user, 'posts' );
+
+      
+    foreach ( $posts as $post )
+
+    {
+
+        $postMapper->delete( $post );  
+    }
 
   
 But this is not great since we have to perform one SQL query for each
 deletion. How can we optimize this ? By using deleteHasOne or deleteHasMany :
 
   
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
 
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
 
-$userMapper = $mapperBuilder->getMapper( 'User' );
+    $userMapper = $mapperBuilder->getMapper( 'User' );
 
-$postMapper = $mapperBuilder->getMapper( 'Post' );
+    $postMapper = $mapperBuilder->getMapper( 'Post' );
 
   
-// 1. load the user with the given user name :
+    // 1. load the user with the given user name :
 
-$user = $userMapper->selectOne( $userMapper->getSchema()->getField( 'uid' ).'
-= :uid',  array( ':uid' => 'Zelda' ) );
+    $user = $userMapper->selectOne( 
+        $userMapper->getSchema()->getField( 'uid' ).' = :uid', 
+        array( ':uid' => 'Zelda' ) );
 
-// 2. delete the user posts :
+    // 2. delete the user posts :
 
-$userMapper->deleteHasMany( $user, 'posts' );
+    $userMapper->deleteHasMany( $user, 'posts' );
 
-// 3. delete the user :
+    // 3. delete the user :
 
-$userMapper->delete( $user );
+    $userMapper->delete( $user );
 
   
 But we still have to delete the posts "by hand". In fact we can do something
 better by using relation triggers :
 
   
-<schema>
+    <schema>
 
-<class name="User" table="users" />
+    <class name="User" table="users" />
 
-<attribute name="id" field="user_id" />
+    <attribute name="id" field="user_id" />
 
-<attribute name="uid" field="user_uid" required="true" />
+    <attribute name="uid" field="user_uid" required="true" />
 
-<attribute name="password" field="user_password" required="true" />
+    <attribute name="password" field="user_password" required="true" />
 
-<attribute name="firstName" field="user_firstname" required="true" />
+    <attribute name="firstName" field="user_firstname" required="true" />
 
-<attribute name="lastName" field="user_lastname" required="true" />
+    <attribute name="lastName" field="user_lastname" required="true" />
 
-<attribute name="email" field="user_email" />
+    <attribute name="email" field="user_email" />
 
-<attribute name="registration" field="user_registration" />
+    <attribute name="registration" field="user_registration" />
 
-**<hasmany name="posts" class="Post" rel="User.id:Post.author" ondelete="delete" />**  
-<key name="id" />
+    **<hasmany name="posts" class="Post" rel="User.id:Post.author" ondelete="delete" />**  
+    <key name="id" />
 
-</schema>
+    </schema>
 
   
 The ondelete="delete" attribute tells pdocrud to delete all the posts of the
@@ -841,23 +850,24 @@ user when the user is delete. This will be executed automatically by the
 delete method of $userMapper :
 
   
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
 
-$mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
+    $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
 
-$userMapper = $mapperBuilder->getMapper( 'User' );
+    $userMapper = $mapperBuilder->getMapper( 'User' );
 
-$postMapper = $mapperBuilder->getMapper( 'Post' );
+    $postMapper = $mapperBuilder->getMapper( 'Post' );
 
   
-// 1. load the user with the given user name :
+    // 1. load the user with the given user name :
 
-$user = $userMapper->selectOne( $userMapper->getSchema()->getField( 'uid' ).'
-= :uid',  array( ':uid' => 'Zelda' ) );
+    $user = $userMapper->selectOne( 
+        $userMapper->getSchema()->getField( 'uid' ).' = :uid',  
+        array( ':uid' => 'Zelda' ) );
 
-// 2. delete the user and all its related posts :
+    // 2. delete the user and all its related posts :
 
-$userMapper->delete( $user );
+    $userMapper->delete( $user );
 
   
 Again all the details are encapsulated into the relation and the developer do
