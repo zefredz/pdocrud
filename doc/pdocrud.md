@@ -97,8 +97,8 @@ used to have the same DSN syntax for all the PDO drivers.
     $pdo = PDOFactory::getConnection( $dsn );
 
       
-    The PDOFactory is based uses driver-specific factories implementing a
-    PDOAbstractFactory interface :
+The PDOFactory is based uses driver-specific factories implementing a
+PDOAbstractFactory interface :
 
       
     /**
@@ -126,8 +126,8 @@ PDOFactory methods summary :
 
   
 
-  * _static _**register**( $scheme, $factory ), register a factory for a given driver (scheme) 
-  * _static _**getConnection**( $dsn ), get a connection for the given DSN  
+  * _static_ **register**( $scheme, $factory ), register a factory for a given driver (scheme) 
+  * _static_ **getConnection**( $dsn ), get a connection for the given DSN
 
   
 The **PDOSQLScript **uses Ă  PDO connection to a database to execute an SQL
@@ -138,14 +138,14 @@ script :
 
     CREATE TABLE `comment` (
 
-      `comment_id` int(11) NOT NULL auto_increment,  
-      `comment_code_id` int(11) NOT NULL default '0',  
-      `comment_author` varchar(255) NOT NULL default '',  
-      `comment_email` varchar(255) default NULL,  
-      `comment_title` varchar(255) NOT NULL default '',  
-      `comment_time` datetime default '0000-00-00 00:00:00',  
-      `comment_content` text NOT NULL,  
-      PRIMARY KEY  (`comment_id`)  
+      `comment_id` int(11) NOT NULL auto_increment,
+      `comment_code_id` int(11) NOT NULL default '0',
+      `comment_author` varchar(255) NOT NULL default '',
+      `comment_email` varchar(255) default NULL,
+      `comment_title` varchar(255) NOT NULL default '',
+      `comment_time` datetime default '0000-00-00 00:00:00',
+      `comment_content` text NOT NULL,
+      PRIMARY KEY  (`comment_id`)
     );
 
     __SQL__;
@@ -161,8 +161,8 @@ A mappable object is an object with public attributes corresponding to fields
 in a database table with no constructor or a constructor with no parameters :
 
   
-    class Comment  
-    {  
+    class Comment
+    {
         public $id;  
         public $codeId;  
         public $author;  
@@ -175,22 +175,22 @@ in a database table with no constructor or a constructor with no parameters :
         {  
             var_dump( $this );  
         }  
-    }  
+    }
   
-The mapping information is given by a XML schema . The elements of the schema
+The mapping information is given by a XML schema. The elements of the schema
 are :
 
   
-**attribute**: denotes a required xml attribute or element  
-_attribute _: denotes an optional xml attribute or element
+**attribute**: denotes a required xml attribute or element
+_attribute_ : denotes an optional xml attribute or element
 
   
 
   * one **class** element with 
 
-    * **name**: class name (denoted "_current class_" in the following)  
+    * **name**: class name (denoted "_current class_" in the following)
 
-    * **table**: database table name  
+    * **table**: database table name
 
   * one or more **attribute** element with 
 
@@ -201,22 +201,22 @@ _attribute _: denotes an optional xml attribute or element
 
   * one **key** element : 
 
-    * **name** : name of the attribute used as key (must be declared in an attribute element)  
+    * **name** : name of the attribute used as key (must be declared in an attribute element)
 
   * zero or more _hasone/hasmany_ elements with 
 
     * **name**: name of the attribute to map to the hasone relation (must be declared in an attribute element) 
-    * **class**: name of the class to map (denoted "_hasone-related class_" in the following)  
+    * **class**: name of the class to map (denoted "_hasone-related class_" in the following)
 
     * _rel_: description of the relation mapping in one of the following format : 
 
-      * Class1.attr1:Class2.attr2 : use attribute attr1 from the current class and attribute attr2 from the hasone relatedclass  
+      * Class1.attr1:Class2.attr2 : use attribute attr1 from the current class and attribute attr2 from the hasone relatedclass
 
       * Class1.attr or Class1.attr: : use attribute attr from class one and declared key for the hasone-related class 
       * :Class2.attr : use the key of the current class and the attr attribute of the hasone-related class 
       * empty or missing : use the declared key for both the current class and the hasone-related class 
 
-    * _ondelete_: trigger if the current object is deleted : value keep (default) or delete  
+    * _ondelete_: trigger if the current object is deleted : value keep (default) or delete
 
   
 Sample schema for the Comment class :
@@ -289,7 +289,7 @@ public methods :
 ###  1.3. PDOMapper
 
 The **PDOMapper** is the main class of the PDO-ORM and implements the CRUD
-methods for the mapped objects represented by **PDOMapperSchema **:
+methods for the mapped objects represented by **PDOMapperSchema**:
 
   
     $commentSchemaObj = new PDOMapperSchema( $commentXMLSchema );
@@ -309,12 +309,11 @@ The **PDOMapper** declares the following CRUD methods :
   * **selectAll**( $clause = "1", $params = null ):array of objects, select all the objects of the current schema matching the given clause
   * **hasOne**( $obj, $name ):object or false, return the object of the has one relation
   * **hasMany**( $obj, $name ): array of object, returns the objects of the has many relation
-  * **deleteWhere**( $clause = '1', $params = null ):boolean, delete objects giving a clause (warning : deleteWhere do not use triggers !)  
-
+  * **deleteWhere**( $clause = '1', $params = null ):boolean, delete objects giving a clause (warning : deleteWhere do not use triggers !)
   * **deleteAll**():boolean, delete all objects (warning : deleteAll do not use triggers !)
   * **deleteHasOne**( $obj, $name ):boolean, delete an object related to the current object through a has one relation
   * **deleteHasMany**( $obj, $name ):boolean, delete an object related to the current object through a has many relation
-  * **getSchema**():PDOMapperSchema, return the current schema  
+  * **getSchema**():PDOMapperSchema, return the current schema
 
 ###  1.4. PDOMapperBuilder
 
@@ -596,7 +595,7 @@ one Post is owned by one User. In our schema, this will be represented by
 
     <attribute name="postedTime" field="post_time" />
 
-    **<hasone name="author" class="User" rel="Post.author:User.id" />**  
+    **<hasone name="author" class="User" rel="Post.author:User.id" />**
     <key name="id" />
 
     </schema>
@@ -632,7 +631,7 @@ the schema itself  :
     $user4 = $postMapper->hasOne( $post, 'author' ) );
 
   
-**__2.2.2. Has Many relation : Getting the posts of a user :__**  
+**__2.2.2. Has Many relation : Getting the posts of a user :__**
   
 We can also get the posts of a given user by calling :
 
@@ -683,7 +682,7 @@ Post since one User can write several Posts :
 
     <attribute name="registration" field="user_registration" />
 
-    **<hasmany name="posts" class="Post" rel="User.id:Post.author" />**  
+    **<hasmany name="posts" class="Post" rel="User.id:Post.author" />**
     <key name="id" />
 
     </schema>
@@ -721,7 +720,7 @@ Now we do not need to know about the internals of the relation between User
 and Post anymore !
 
   
-**__2.2.3. Deleting with relations__**  
+**__2.2.3. Deleting with relations__**
   
 Let's see how relations can simplify the deletion of objects related through a
 has one or has many relation.
@@ -838,7 +837,7 @@ better by using relation triggers :
 
     <attribute name="registration" field="user_registration" />
 
-    **<hasmany name="posts" class="Post" rel="User.id:Post.author" ondelete="delete" />**  
+    **<hasmany name="posts" class="Post" rel="User.id:Post.author" ondelete="delete" />**
     <key name="id" />
 
     </schema>
