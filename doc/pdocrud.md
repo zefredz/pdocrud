@@ -50,8 +50,7 @@ bugs and security flaws are easier to find and correct.
 
 ###  A simple ORM framework for PHP5
 
-The ORM architecture described here is aimed to provide the following features
-:
+The ORM architecture described here is aimed to provide the following features :
 
   
 
@@ -85,7 +84,7 @@ the DBMS.
 
 ###  1.1. Utility classes : PDOFactory and PDOSQLScript
 
-The **PDOFactory **class is not directly related with the PDO-based ORM. It is
+The **PDOFactory** class is not directly related with the PDO-based ORM. It is
 used to have the same DSN syntax for all the PDO drivers.
 
   
@@ -182,34 +181,34 @@ The mapping information is given by a XML schema . The elements of the schema
 are :
 
   
-**attribute **: denotes a required xml attribute or element  
+**attribute**: denotes a required xml attribute or element  
 _attribute _: denotes an optional xml attribute or element
 
   
 
-  * one **class **element with 
+  * one **class** element with 
 
-    * **name **: class name (denoted "_current class_" in the following)  
+    * **name**: class name (denoted "_current class_" in the following)  
 
-    * **table **: database table name  
+    * **table**: database table name  
 
-  * one or more **attribute **element with 
+  * one or more **attribute** element with 
 
-    * **name **: name of the attribute of the object of the current class to map 
-    * **field **: name of the corresponding field in the database table 
-    * _required _: this field is required and then could not be empty in the object 
-    * _default _: default value for the object attribute if missing 
+    * **name**: name of the attribute of the object of the current class to map 
+    * **field**: name of the corresponding field in the database table 
+    * _required_: this field is required and then could not be empty in the object 
+    * _default_: default value for the object attribute if missing 
 
-  * one **key **element : 
+  * one **key** element : 
 
-    * **name **: name of the attribute used as key (must be declared in an attribute element)  
+    * **name** : name of the attribute used as key (must be declared in an attribute element)  
 
-  * zero or more _hasone/hasmany _elements with 
+  * zero or more _hasone/hasmany_ elements with 
 
-    * **name **: name of the attribute to map to the hasone relation (must be declared in an attribute element) 
-    * **class **: name of the class to map (denoted "_hasone-related class_" in the following)  
+    * **name**: name of the attribute to map to the hasone relation (must be declared in an attribute element) 
+    * **class**: name of the class to map (denoted "_hasone-related class_" in the following)  
 
-    * _rel _: description of the relation mapping in one of the following format : 
+    * _rel_: description of the relation mapping in one of the following format : 
 
       * Class1.attr1:Class2.attr2 : use attribute attr1 from the current class and attribute attr2 from the hasone relatedclass  
 
@@ -217,7 +216,7 @@ _attribute _: denotes an optional xml attribute or element
       * :Class2.attr : use the key of the current class and the attr attribute of the hasone-related class 
       * empty or missing : use the declared key for both the current class and the hasone-related class 
 
-    * _ondelete _: trigger if the current object is deleted : value keep (default) or delete  
+    * _ondelete_: trigger if the current object is deleted : value keep (default) or delete  
 
   
 Sample schema for the Comment class :
@@ -257,7 +256,7 @@ Alternatively, you can use a file :
     $commentSchemaObj = PDOMapperSchema::fromFile( 'path/to/comment.xml' );
 
   
-The **PDOMapperSchema **class provides methods to get informations about the
+The **PDOMapperSchema** class provides methods to get informations about the
 schema :
 
   
@@ -289,7 +288,7 @@ public methods :
 
 ###  1.3. PDOMapper
 
-The **PDOMapper **is the main class of the PDO-ORM and implements the CRUD
+The **PDOMapper** is the main class of the PDO-ORM and implements the CRUD
 methods for the mapped objects represented by **PDOMapperSchema **:
 
   
@@ -298,7 +297,7 @@ methods for the mapped objects represented by **PDOMapperSchema **:
     $commentMapper = new PDOMapper( $commentSchemaObj );
 
   
-The **PDOMapper **declares the following CRUD methods :
+The **PDOMapper** declares the following CRUD methods :
 
   
 
@@ -319,7 +318,7 @@ The **PDOMapper **declares the following CRUD methods :
 
 ###  1.4. PDOMapperBuilder
 
-The **PDOMapperBuilder **is the registry and factory for the PDOMapper objects
+The **PDOMapperBuilder** is the registry and factory for the PDOMapper objects
 and made instanciation of mapped objects easier :
 
   
@@ -578,7 +577,7 @@ This method is great and simple but it has a flaw : we have to know about the
 way a user is connected to his posts in the database to write the code ! We
 can get rid of this limitation by defining a relation between User and Post :
 one Post is owned by one User. In our schema, this will be represented by
-**ahasone **element in the Post schema :
+**ahasone** element in the Post schema :
 
   
     <schema>
@@ -690,7 +689,7 @@ Post since one User can write several Posts :
     </schema>
 
   
-The added **hasmany **element means that "_one user owns many posts and that
+The added **hasmany** element means that "_one user owns many posts and that
 the posts of the user can be found by searching the posts in the database
 having the user id has their author_".
 
