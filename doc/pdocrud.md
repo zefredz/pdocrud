@@ -57,19 +57,14 @@ bugs and security flaws are easier to find and correct.
 
 ###  A simple ORM framework for PHP5
 
-The ORM architecture described here is aimed to provide the following features :
-
-  
+The ORM architecture described here is aimed to provide the following features : 
 
   1. a lightweight easy to use and understand object-oriented ORM architecture 
   2. based on PDO, simplexml and other PHP 5 powerfull features 
   3. CRUD (Create Read Update Delete) objects based on PHP classes with no need to implement the SQL queries 
   4. basic relations : 
-
     1. hasone : object has another object mapped from the db mapped to one of his attribute 
     2. hasmany : object has many objects mapped from the db mapped to one of his attribute 
-
-  
 
 ###  Acronyms and conventions
 
