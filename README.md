@@ -5,13 +5,13 @@ An ORM based on PDO written years ago
 
 #  PDO-based Object Relational Mapper
 
-**IDEAS :**  
+**IDEAS :**
   
-- add triggers on relations for the other member of the relation (default: keep) :  
-    - ondelete="(keep|delete)" done  
-    - onupdate="(keep|update)"  
-- use camelizer and pluralizer classes to compute missing table or field names  
-- DatabaseToSchema class to convert an existing database table to a PDOMapperSchema  
+- add triggers on relations for the other member of the relation (default: keep) :
+    - ondelete="(keep|delete)" done
+    - onupdate="(keep|update)"
+- use camelizer and pluralizer classes to compute missing table or field names
+- DatabaseToSchema class to convert an existing database table to a PDOMapperSchema
   
 DRAFT - WORKING COPY !!!!
 
@@ -72,16 +72,16 @@ The ORM architecture described here is aimed to provide the following features
 
 ###  Acronyms and conventions
 
-**PDO **: PHP Data Object  
-**ORM **: Object-Relationnal Mapper  
-**DSN **: Data Source Name  
-**CRUD **: Create Read Update Delete  
+**PDO **: PHP Data Object
+**ORM **: Object-Relationnal Mapper
+**DSN **: Data Source Name
+**CRUD **: Create Read Update Delete
   
 code source are in courier new
 
 ###  Warning
 
-**At this time the basic operations select(One/All), create, update, delete, hasOne and hasMany are already working. Planned feature : hasAndBelongsToOne/Many based on a n:m relation table.**  
+**At this time the basic operations select(One/All), create, update, delete, hasOne and hasMany are already working. Planned feature : hasAndBelongsToOne/Many based on a n:m relation table.**
   
 Note that the database and the tables used by the PDO-based ORM must exist in
 the DBMS.

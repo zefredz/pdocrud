@@ -1,12 +1,11 @@
 #  PDO-based Object Relational Mapper
 
-**IDEAS :**  
-  
-- add triggers on relations for the other member of the relation (default: keep) :  
-    - ondelete="(keep|delete)" done  
-    - onupdate="(keep|update)"  
-- use camelizer and pluralizer classes to compute missing table or field names  
-- DatabaseToSchema class to convert an existing database table to a PDOMapperSchema  
+**IDEAS :**
+- add triggers on relations for the other member of the relation (default: keep) :
+    - ondelete="(keep|delete)" done
+    - onupdate="(keep|update)"
+- use camelizer and pluralizer classes to compute missing table or field names
+- DatabaseToSchema class to convert an existing database table to a PDOMapperSchema
   
 DRAFT - WORKING COPY !!!!
 
@@ -66,10 +65,10 @@ The ORM architecture described here is aimed to provide the following features :
 
 ###  Acronyms and conventions
 
-**PDO **: PHP Data Object  
-**ORM **: Object-Relationnal Mapper  
-**DSN **: Data Source Name  
-**CRUD **: Create Read Update Delete  
+**PDO**: PHP Data Object  
+**ORM**: Object-Relationnal Mapper  
+**DSN**: Data Source Name  
+**CRUD**: Create Read Update Delete  
   
 code source are in courier new
 
@@ -893,7 +892,7 @@ PDO SQL script class diagram :
 
   
 
-   [1]: pdocrud_images/d3vwdgb_36hhmmr2hr.png
-   [2]: pdocrud_images/d3vwdgb_34dqxh3shh.png
-   [3]: pdocrud_images/d3vwdgb_35g4tfj3hp.png
+   [1]: pdomapper.png
+   [2]: pdocrudfactory.png
+   [3]: pdosqlscript.png
 
