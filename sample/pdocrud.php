@@ -46,11 +46,11 @@
         echo "<h2>1.2 initializing the database</h2>\n";
         // initialize the test database
         $script = new PDOSQLScript( $pdoconn );
-        $script->execute( file_get_contents( dirname(__FILE__) . '/blog/sql/user.sql' ) );
-        $script->execute( file_get_contents( dirname(__FILE__) . '/blog/sql/post.sql' ) );
-        $script->execute( file_get_contents( dirname(__FILE__) . '/blog/sql/comment.sql' ) );
-        $script->execute( file_get_contents( dirname(__FILE__) . '/blog/sql/tag.sql' ) );
-        $script->execute( file_get_contents( dirname(__FILE__) . '/blog/sql/post_tag.sql' ) );
+        $script->execute( file_get_contents( dirname(__FILE__) . '/blog/sql/User.sql' ) );
+        $script->execute( file_get_contents( dirname(__FILE__) . '/blog/sql/Post.sql' ) );
+        $script->execute( file_get_contents( dirname(__FILE__) . '/blog/sql/Comment.sql' ) );
+        $script->execute( file_get_contents( dirname(__FILE__) . '/blog/sql/Tag.sql' ) );
+        $script->execute( file_get_contents( dirname(__FILE__) . '/blog/sql/Post_Tag.sql' ) );
         echo "done";
         
         // PDO CRUD
