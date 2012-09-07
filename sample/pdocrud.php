@@ -21,15 +21,15 @@
      * @package     pdocrud
      */
 
-    require_once dirname(__FILE__) . '/../lib/pdofactory.lib.php';
-    require_once dirname(__FILE__) . '/../lib/pdosqlscript.lib.php';
+    require_once dirname(__FILE__) . '/../lib/PDOCrudLoader.php';
     
-    require_once dirname(__FILE__) . '/../lib/pdomapper.lib.php';
-    require_once dirname(__FILE__) . '/../lib/pdomapperbuilder.lib.php';
-    require_once dirname(__FILE__) . '/../lib/pdomapperschema.lib.php';
+    $loader = new PDOCrudLoader;
+    $loader->register();
     
     require_once dirname(__FILE__) . '/estrict.inc.php';
     enable_eStrictLog();
+    
+    PDOFactory::register( 'mysql', 'PDOMySQLFactory' );
     
     define ( 'SCHEMA_PATH', dirname(__FILE__).'/blog/schema' );
     
@@ -56,10 +56,10 @@
         // PDO CRUD
         
         echo "<h2>1.3 initializing the classes</h2>\n";
-        require_once dirname(__FILE__) . '/blog/classes/user.class.php';
-        require_once dirname(__FILE__) . '/blog/classes/comment.class.php';
-        require_once dirname(__FILE__) . '/blog/classes/post.class.php';
-        require_once dirname(__FILE__) . '/blog/classes/tag.class.php';
+        require_once dirname(__FILE__) . '/blog/classes/User.php';
+        require_once dirname(__FILE__) . '/blog/classes/Comment.php';
+        require_once dirname(__FILE__) . '/blog/classes/Post.php';
+        require_once dirname(__FILE__) . '/blog/classes/Tag.php';
         echo "done\n";
         
         echo "<h2>1.4 initializing PDO mappers</h2>\n";
@@ -67,10 +67,10 @@
         
         echo "<h3>1.4.1 loadings schemas</h3>\n";
         // load the schema
-        $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/user.xml'));
-        $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/post.xml'));
-        $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/comment.xml'));
-        $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/tag.xml'));
+        $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/User.xml'));
+        $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/Post.xml'));
+        $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/Comment.xml'));
+        $mapperBuilder->register( PDOMapperSchema::fromFile(SCHEMA_PATH.'/Tag.xml'));
         echo "done\n";
         
         echo "<h3>1.4.2 getting mappers</h3>\n";
