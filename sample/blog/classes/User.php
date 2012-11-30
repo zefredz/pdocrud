@@ -9,7 +9,7 @@
  * @copyright   2001-2012 Universite catholique de Louvain (UCL)
  * @author      Claroline Team <info@claroline.net>
  * @author      Frederic Minne <zefredz@claroline.net>
- * @license     GNU AGPL version 3 or later https://www.gnu.org/licenses/agpl-3.0.html
+ * @license     GNU LGPL version 3 or later https://www.gnu.org/copyleft/lesser.html
  * @package     PACKAGE_NAME
  */
 

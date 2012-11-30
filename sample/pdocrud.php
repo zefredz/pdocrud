@@ -14,7 +14,7 @@
      * @version     1.9 $Revision$
      * @copyright   2001-2012 Universite catholique de Louvain (UCL)
      * @author      Frederic Minne <zefredz@claroline.net>
-     * @license     GNU AGPL version 3 or later https://www.gnu.org/licenses/agpl-3.0.html
+     * @license     GNU LGPL version 3 or later https://www.gnu.org/copyleft/lesser.html
      * @package     pdocrud
      */
 
