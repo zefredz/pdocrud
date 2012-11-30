@@ -97,6 +97,23 @@
         
         echo "done\n";
         
+         echo "<h2>2.1bis loading one comment from user with id = 4</h2>\n";
+        // get one comment from a user
+        $comment = $commentMapper->selectOne(
+            '%author% = :id',
+            array( ':id' => '4' ));
+            
+        if ( $comment )
+        {
+            $comment->dump();
+        }
+        else
+        {
+            echo "failure<br />\n";
+        }
+        
+        echo "done\n";
+        
         echo "<h2>2.2 loading user with id = 4</h2>\n";
         
         $user4 = $commentMapper->hasOne( $comment, 'author' );
