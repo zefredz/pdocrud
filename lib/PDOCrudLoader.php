@@ -6,8 +6,7 @@
  * @version     2.2
  * @copyright   2001-2012 Universite catholique de Louvain (UCL)
  * @author      Frederic Minne <frederic.minne@uclouvain.be>
- * @license     http://www.fsf.org/licensing/licenses/agpl-3.0.html
- *              GNU AFFERO GENERAL PUBLIC LICENSE version 3
+ * @license     GNU AGPL version 3 or later https://www.gnu.org/licenses/agpl-3.0.html
  */
 
 class PDOCrudLoader

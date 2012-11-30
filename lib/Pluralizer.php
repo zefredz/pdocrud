@@ -9,8 +9,7 @@
  * @version     1.0
  * @copyright   2001-2012 Universite catholique de Louvain (UCL)
  * @author      Frederic Minne <zefredz@gmail.com>
- * @license     https://www.gnu.org/licenses/lgpl.html
- *              GNU LESSER GENERAL PUBLIC LICENSE version 3 or later
+ * @license     GNU AGPL version 3 or later https://www.gnu.org/licenses/agpl-3.0.html
  * @package     pdocrud
  */
 class Pluralizer
