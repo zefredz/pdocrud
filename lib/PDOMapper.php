@@ -24,6 +24,7 @@ class PDOMapper
     protected $schema;
     protected $db;
     protected $builder;
+    protected $clauseParser;
 
     /**
      * Constructor
@@ -35,6 +36,7 @@ class PDOMapper
         $this->schema = $schema;
         $this->db = $pdo;
         $this->builder = $builder;
+        $this->clauseParser = new PDOMapperClauseParser( $this->schema );
         
         // use exception to report error
         if ( $this->db->getAttribute(PDO::ATTR_ERRMODE) != PDO::ERRMODE_EXCEPTION )
@@ -53,6 +55,8 @@ class PDOMapper
      */
     public function select( $clause = '1', $params = null )
     {
+        $clause = $this->clauseParser->parse($clause);
+        
         $mapping = array();
 
         foreach ( $this->schema->getFieldList() as $name => $field )
@@ -287,6 +291,8 @@ class PDOMapper
      */
     public function deleteWhere( $clause = "1", $params = null )
     {
+        $clause = $this->clauseParser->parse($clause);
+        
         $sql = "DELETE FROM " . $this->schema->getTable() . "\n"
             . "WHERE " . $clause
             ;
@@ -487,14 +493,17 @@ class PDOMapper
     
     public function hasAndBelongsTo( $obj, $name )
     {
+        throw new Exception("Method not implemented yet !");
     }
     
     public function deleteHasAndBelongsTo( $obj, $name )
     {
+        throw new Exception("Method not implemented yet !");
     }
     
     public function insertHasAndBelongsTo( $obj1, $obj2, $name )
     {
+        throw new Exception("Method not implemented yet !");
     }
     
     /**
