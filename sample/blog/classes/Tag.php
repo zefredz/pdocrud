@@ -1,32 +1,26 @@
 <?php // $Id$
 
-    // vim: expandtab sw=4 ts=4 sts=4:
-    
-    /**
-     * Description
-     *
-     * @version     1.9 $Revision$
-     * @copyright   2001-2007 Universite catholique de Louvain (UCL)
-     * @author      Claroline Team <info@claroline.net>
-     * @author      Frederic Minne <zefredz@claroline.net>
-     * @license     http://www.gnu.org/copyleft/gpl.html
-     *              GNU GENERAL PUBLIC LICENSE version 2 or later
-     * @package     PACKAGE_NAME
-     */
+// vim: expandtab sw=4 ts=4 sts=4:
 
-    if ( count( get_included_files() ) == 1 )
-    {
-        die( 'The file ' . basename(__FILE__) . ' cannot be accessed directly, use include instead' );
-    }
+/**
+ * Description
+ *
+ * @version     1.9 $Revision$
+ * @copyright   2001-2012 Universite catholique de Louvain (UCL)
+ * @author      Claroline Team <info@claroline.net>
+ * @author      Frederic Minne <zefredz@claroline.net>
+ * @license     http://www.gnu.org/copyleft/gpl.html
+ *              GNU GENERAL PUBLIC LICENSE version 2 or later
+ * @package     PACKAGE_NAME
+ */
 
-    class Tag 
+class Tag 
+{
+    public $id;
+    public $name;
+
+    public function dump()
     {
-        public $id;
-        public $name;
-        
-        public function dump()
-        {
-            var_dump( $this );
-        }
+        var_dump( $this );
     }
-?>
+}
