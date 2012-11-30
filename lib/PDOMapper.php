@@ -30,12 +30,12 @@ class PDOMapper
      * @param   PDO $pdo PDO database connection
      * @param   PDOMapperSchema $schema
      */
-    public function __construct( $pdo, $schema, $builder )
+    public function __construct( $pdo, $schema, $builder, $clauseParser )
     {
         $this->schema = $schema;
         $this->db = $pdo;
         $this->builder = $builder;
-        $this->clauseParser = new PDOMapperClauseParser( $this->schema );
+        $this->clauseParser = $clauseParser;
         
         // use exception to report error
         if ( $this->db->getAttribute(PDO::ATTR_ERRMODE) != PDO::ERRMODE_EXCEPTION )

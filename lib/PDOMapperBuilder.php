@@ -60,7 +60,7 @@ class PDOMapperBuilder
         if ( ! array_key_exists( $className, $this->mapperRegistry ) )
         {
             $this->mapperRegistry[$className] = new PDOMapper(
-                $this->database, $schemaObj, $this );
+                $this->database, $schemaObj,  $this, new PDOMapperClauseParser( $schemaObj ) );
         }
         
         if ( ! array_key_exists( $className, $this->schemaRegistry ) )
