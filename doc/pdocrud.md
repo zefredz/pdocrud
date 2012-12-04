@@ -94,7 +94,7 @@ used to have the same DSN syntax for all the PDO drivers.
 
     $dsn = 'sqlite:/path/to/database';
 
-    $dsn = 'sdlite::memory:';
+    $dsn = 'sqlite::memory:';
 
     $pdo = PDOFactory::getConnection( $dsn );
 
