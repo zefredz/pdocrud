@@ -96,7 +96,7 @@
         
         echo "done\n";
         
-         echo "<h2>2.1bis loading one comment from user with id = 4</h2>\n";
+         echo "<h2>2.1bis loading one comment from user with id = 4, using clause parser</h2>\n";
         // get one comment from a user
         $comment = $commentMapper->selectOne(
             '%author% = :id',
